@@ -39,18 +39,20 @@ pipeline {
             }
             stage('(Docker) Get FPC sources') {
               steps {
-                sh 'git clone https://gitlab.com/freepascal.org/fpc/source.git --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpc'
+                sh 'git clone https://gitlab.com/freepascal.org/fpc/source.git --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc'
               }
             }
             stage('(Docker) Build and install FPC') {
               steps {
                 dir ('fpcsrc/') {
                   sh 'make clean all install INSTALL_PREFIX="${WORKSPACE}"/fpc'
+                  sh 'make clean' // clean after build, as we'll package this fpcsrc directory
                 }
               }
             }
             stage('(Docker) Archive') {
               steps {
+                sh 'mv fpcsrc/ fpc/src/'
                 sh 'zip fpc-linux-x86_64.zip fpc/'
                 archiveArtifacts artifacts: 'fpc-*.zip'
               }
@@ -70,18 +72,20 @@ pipeline {
             }
             stage('(Windows) Get FPC sources') {
               steps {
-                sh 'git clone https://gitlab.com/freepascal.org/fpc/source.git --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpc'
+                sh 'git clone https://gitlab.com/freepascal.org/fpc/source.git --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc'
               }
             }
             stage('(Windows) Build and install FPC') {
               steps {
                 dir ('fpcsrc/') {
                   sh 'make clean all install INSTALL_PREFIX="${WORKSPACE}"/fpc'
+                  sh 'make clean' // clean after build, as we'll package this fpcsrc directory
                 }
               }
             }
             stage('(Windows) Archive') {
               steps {
+                sh 'mv fpcsrc/ fpc/src/'
                 sh 'zip fpc-win64-x86_64.zip fpc/'
                 archiveArtifacts artifacts: 'fpc-*.zip'
               }
