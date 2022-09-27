@@ -53,7 +53,7 @@ pipeline {
             stage('(Docker) Archive') {
               steps {
                 sh 'mv fpcsrc/ fpc/src/'
-                sh 'zip fpc-linux-x86_64.zip fpc/'
+                sh 'zip -r fpc-linux-x86_64.zip fpc/'
                 archiveArtifacts artifacts: 'fpc-*.zip'
               }
             }
@@ -86,7 +86,7 @@ pipeline {
             stage('(Windows) Archive') {
               steps {
                 sh 'mv fpcsrc/ fpc/src/'
-                sh 'zip fpc-win64-x86_64.zip fpc/'
+                sh 'zip -r fpc-win64-x86_64.zip fpc/'
                 archiveArtifacts artifacts: 'fpc-*.zip'
               }
             }
