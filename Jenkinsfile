@@ -49,7 +49,12 @@ pipeline {
                 }
               }
             }
-            stage('(Docker) Archive to fpc/src') {
+            stage('(Docker) Post install: Copy ppcXXX executable') {
+              steps {
+                sh 'cp -f fpc/lib/fpc/"${FPC_VERSION}"/ppcx64 fpc/bin/'
+              }
+            }
+            stage('(Docker) Sources to fpc/src') {
               /* See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
 
                  This way we only copy to fpc/src files from repo (not any compiled stuff,
@@ -93,7 +98,12 @@ pipeline {
                 }
               }
             }
-            stage('(Windows) Archive to fpc/src') {
+            stage('(Windows) Post install: Flatten fpc/bin/') {
+              steps {
+                sh 'mv -f fpc/bin/x86_64-win64/* fpc/bin/'
+              }
+            }
+            stage('(Windows) Sources to fpc/src') {
               /* See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
 
                  This way we only copy to fpc/src files from repo (not any compiled stuff,
