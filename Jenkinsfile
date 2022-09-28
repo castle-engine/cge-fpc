@@ -46,13 +46,24 @@ pipeline {
               steps {
                 dir ('fpcsrc/') {
                   sh 'make clean all install INSTALL_PREFIX="${WORKSPACE}"/fpc'
-                  sh 'make clean' // clean after build, as we'll package this fpcsrc directory
+                }
+              }
+            }
+            stage('(Docker) Archive to fpc/src') {
+              /* See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
+
+                 This way we only copy to fpc/src files from repo (not any compiled stuff,
+                 and "make clean" doesn't really clean everything; and not .git subdir).
+              */
+              steps {
+                dir ('fpcsrc/') {
+                  sh 'mkdir ../fpc/src'
+                  sh 'git archive master | tar -x -C ../fpc/src'
                 }
               }
             }
             stage('(Docker) Archive') {
               steps {
-                sh 'mv fpcsrc/ fpc/src/'
                 sh 'zip -r fpc-linux-x86_64.zip fpc/'
                 archiveArtifacts artifacts: 'fpc-*.zip'
               }
@@ -79,13 +90,24 @@ pipeline {
               steps {
                 dir ('fpcsrc/') {
                   sh 'make clean all install INSTALL_PREFIX="${WORKSPACE}"/fpc'
-                  sh 'make clean' // clean after build, as we'll package this fpcsrc directory
+                }
+              }
+            }
+            stage('(Windows) Archive to fpc/src') {
+              /* See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
+
+                 This way we only copy to fpc/src files from repo (not any compiled stuff,
+                 and "make clean" doesn't really clean everything; and not .git subdir).
+              */
+              steps {
+                dir ('fpcsrc/') {
+                  sh 'mkdir ../fpc/src'
+                  sh 'git archive master | tar -x -C ../fpc/src'
                 }
               }
             }
             stage('(Windows) Archive') {
               steps {
-                sh 'mv fpcsrc/ fpc/src/'
                 sh 'zip -r fpc-win64-x86_64.zip fpc/'
                 archiveArtifacts artifacts: 'fpc-*.zip'
               }
