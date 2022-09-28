@@ -63,7 +63,7 @@ pipeline {
               steps {
                 dir ('fpcsrc/') {
                   sh 'mkdir ../fpc/src'
-                  sh 'git archive master | tar -x -C ../fpc/src'
+                  sh 'git archive HEAD | tar -x -C ../fpc/src'
                 }
               }
             }
@@ -112,7 +112,7 @@ pipeline {
               steps {
                 dir ('fpcsrc/') {
                   sh 'mkdir ../fpc/src'
-                  sh 'git archive master | tar -x -C ../fpc/src'
+                  sh 'git archive HEAD | tar -x -C ../fpc/src'
                 }
               }
             }
