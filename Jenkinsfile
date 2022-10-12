@@ -49,9 +49,12 @@ pipeline {
                 }
               }
             }
-            stage('(Docker) Post install: Copy ppcXXX executable') {
+            stage('(Docker) Post install: Make layout simple') {
               steps {
-                sh 'cp -f fpc/lib/fpc/"${FPC_VERSION}"/ppcx64 fpc/bin/'
+                // Put ppcx64 in fpc/bin/, so that main fpc binary can find it easily
+                sh 'mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppcx64 fpc/bin/'
+                // Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
+                sh 'mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/'
               }
             }
             stage('(Docker) Sources to fpc/src') {
@@ -101,6 +104,8 @@ pipeline {
             stage('(Windows) Post install: Flatten fpc/bin/') {
               steps {
                 sh 'mv -f fpc/bin/x86_64-win64/* fpc/bin/'
+                // Remove empty unneeded dir
+                sh 'rm -R fpc/bin/x86_64-win64/'
               }
             }
             stage('(Windows) Sources to fpc/src') {
