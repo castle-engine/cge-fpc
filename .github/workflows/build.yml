@@ -20,10 +20,10 @@ jobs:
     name: Build
     strategy:
       matrix:
-        # Using macos-12, not macos-latest.
-        # Avoids "ld: library not found for -lc",
-        # althogh possibly it could be solved differently too: https://forum.lazarus.freepascal.org/index.php?topic=61430.15
-        runner: [ubuntu-latest, macos-12, windows-latest]
+        # Using macos-12, not macos-latest, for Intel mac.
+        # TODO: "ld: library not found for -lc",
+        # see solutions on https://forum.lazarus.freepascal.org/index.php?topic=61430.15
+        runner: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.runner }}
     steps:
       # No need to checkout, as we're not using the repository contents.
