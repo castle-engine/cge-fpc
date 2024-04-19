@@ -26,6 +26,13 @@ jobs:
       # No need to checkout, as we're not using the repository contents.
       # - uses: actions/checkout@v4
 
+      # Get last stable FPC to bootstrap
+      - uses: actions/checkout@v4
+      - name: Install FPC+Lazarus
+        uses: gcarreno/setup-lazarus@v3.2.17
+        with:
+          lazarus-version: stable
+
       - name: Set environment FPC_BRANCHTAG
         run: echo FPC_BRANCHTAG='release_3_2_2' >> $GITHUB_ENV
       - name: Set environment FPC_VERSION
