@@ -1,0 +1,85 @@
+# ----------------------------------------------------------------------------
+# GitHub Action workflow to build FPC to be bundled with CGE downloads
+# on https://castle-engine.io/download .
+#
+# See https://docs.github.com/en/actions for docs.
+# ----------------------------------------------------------------------------
+
+name: Build
+
+# workflow_dispatch allows to call it manually
+# See https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow
+on: [push, pull_request, workflow_dispatch]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      # No need to checkout, as we're not using the repository contents.
+      # - uses: actions/checkout@v4
+
+      - name: Set environment FPC_BRANCHTAG
+        run: echo FPC_BRANCHTAG='release_3_2_2' >> $GITHUB_ENV
+      - name: Set environment FPC_VERSION
+        run: echo FPC_VERSION='3.2.2' >> $GITHUB_ENV
+      - name: Set environment FPC_OS
+        run: echo "FPC_OS="`fpc -iTO` >> $GITHUB_ENV
+      - name: Set environment FPC_CPU
+        run: echo "FPC_CPU="`fpc -iTP` >> $GITHUB_ENV
+
+      - name: Cleanup
+        run: |
+          rm -Rf fpcsrc/ fpc/ fpc-*.zip
+          mkdir -p fpc/
+
+      - name: Get FPC sources
+        run: git clone https://gitlab.com/freepascal.org/fpc/source.git --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc
+
+      - name: Build and install FPC
+        run: |
+          cd fpcsrc/
+          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc
+
+      - name: (Post install) Make layout simple
+        if: ${{ matrix.runner == 'ubuntu-latest' }}
+        run: |
+          # Put ppcx64 in fpc/bin/, so that main fpc binary can find it easily
+          mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppcx64 fpc/bin/
+          # Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
+          mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/
+
+      - name: (Post install) Flatten fpc/bin
+        if: ${{ matrix.runner == 'windows-latest' }}
+        run: |
+          mv -f fpc/bin/x86_64-win64/* fpc/bin/
+          # Remove empty unneeded dir
+          rm -R fpc/bin/x86_64-win64/
+
+      - name: Sources to fpc/src
+        # See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
+        # This way we only copy to fpc/src files from repo (not any compiled stuff,
+        # and "make clean" doesn't really clean everything; and not .git subdir).
+        run: |
+          cd fpcsrc/
+          mkdir ../fpc/src
+          git archive HEAD | tar -x -C ../fpc/src
+
+      - name: Archive
+        run: |
+          zip -r fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
+
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fpc-${{ matrix.runner }}-release
+          path: "fpc-*.zip"
+          if-no-files-found: error
+

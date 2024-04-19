@@ -2,6 +2,8 @@
 
 This repository contains our infrastructure to build FPC [Free Pascal Compiler](https://www.freepascal.org/) version that we can easily distribute together with [Castle Game Engine](https://castle-engine.io/download) binary download.
 
+At this point, these are both Jenkins and GitHub Actions jobs.
+
 ## Why
 
 - The goal of this is to provide ready working FPC along with the CGE download for people who don't want to use FPC outside of CGE.
@@ -23,6 +25,8 @@ This repository contains our infrastructure to build FPC [Free Pascal Compiler](
 - This repository contains `Jenkinsfile` (see [about Jenkins](https://castle-engine.io/jenkins)) to build FPC for major CGE supported platforms (`Windows/x86_64`, `Linux/x86_64` for now).
 
     The results of this Jenkins job are what will later be placed in CGE binary download.
+
+    The same job is for now also run on GitHub Actions, `.github/workflows/build.yml`. We're in the process of moving to GitHub Actions fully.
 
 - FPC is build, installed and packaged to a simple zip. Later, such bundle is included in CGE binary download.
 
