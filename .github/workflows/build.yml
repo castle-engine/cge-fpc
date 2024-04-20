@@ -82,9 +82,18 @@ jobs:
           mkdir ../fpc/src
           git archive HEAD | tar -x -C ../fpc/src
 
-      - name: Archive
-        run: |
-          zip -r fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
+      - name: Archive (zip)
+        if: ${{ matrix.runner != 'windows-latest' }}
+        run: zip -r fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
+
+      # Use PowerShell on Windows, as it's preinstalled on GH hosted Windows.
+      # ( We could alternatively install zip, e.g. using Chocolatey,
+      # or use PowerShell
+      # "run: Compress-Archive -Path folder/ -Destination new.zip"
+      # see https://stackoverflow.com/questions/74939762/create-zip-file-of-github-reporitory-using-a-workflow-which-runs-on-windows-lat )
+      - name: Archive (7z)
+        if: ${{ matrix.runner == 'windows-latest' }}
+        run: 7z a fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
 
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
