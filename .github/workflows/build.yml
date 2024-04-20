@@ -107,3 +107,5 @@ jobs:
       - name: Release Artifacts
         if: ${{ github.ref == 'refs/heads/master' }}
         run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber "fpc-*.zip"
+        env:
+          GH_TOKEN: ${{ github.token }}
