@@ -95,10 +95,15 @@ jobs:
         if: ${{ matrix.runner == 'windows-latest' }}
         run: 7z a fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
 
-      - name: Archive Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: fpc-${{ env.FPC_OS }}-${{ env.FPC_CPU }}-release
-          path: "fpc-*.zip"
-          if-no-files-found: error
+      # No need for artifacts actually? This job just updates GH release "snapshot",
+      # and other things (like CGE build with bundled FPC) can just download it.
+      # - name: Archive Artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: fpc-${{ env.FPC_OS }}-${{ env.FPC_CPU }}-release
+      #     path: "fpc-*.zip"
+      #     if-no-files-found: error
 
+      - name: Release Artifacts
+        if: ${{ github.ref == 'refs/heads/master' }}
+        run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber "fpc-*.zip"
