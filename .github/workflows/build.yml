@@ -86,7 +86,7 @@ jobs:
         if: ${{ matrix.runner != 'windows-latest' }}
         run: zip -r fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
 
-      # Use PowerShell on Windows, as it's preinstalled on GH hosted Windows.
+      # Use 7z on Windows to make zip, as it's preinstalled on GH hosted Windows.
       # ( We could alternatively install zip, e.g. using Chocolatey,
       # or use PowerShell
       # "run: Compress-Archive -Path folder/ -Destination new.zip"
