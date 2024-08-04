@@ -2,7 +2,7 @@
 
 This repository contains our infrastructure to build FPC [Free Pascal Compiler](https://www.freepascal.org/) version that we can easily distribute together with [Castle Game Engine](https://castle-engine.io/download) binary download.
 
-At this point, these are both Jenkins and GitHub Actions jobs.
+The scripts are organized in [GitHub Actions](https://castle-engine.io/github_actions) workflows inside the `.github` subdirectory.
 
 ## Why
 
@@ -22,11 +22,17 @@ At this point, these are both Jenkins and GitHub Actions jobs.
 
 - We want a binary FPC build, as a simple zip, for major platforms supported by CGE.
 
-- This repository contains `Jenkinsfile` (see [about Jenkins](https://castle-engine.io/jenkins)) to build FPC for major CGE supported platforms (`Windows/x86_64`, `Linux/x86_64` for now).
+- This repository contains [GitHub Actions](https://castle-engine.io/github_actions) workflows (see inside `.github` subdirectory) to build FPC for major CGE supported platforms. For now:
 
-    The results of this Jenkins job are what will later be placed in CGE binary download.
+    - Windows/x86_64
+    - Linux/x86_64
+    - Linux/Arm (32-bit Raspberry Pi)
+    - Linux/Aarch64 (64-bit Raspberry Pi)
+    - macOS/x86_64
 
-    The same job is for now also run on GitHub Actions, `.github/workflows/build.yml`. We're in the process of moving to GitHub Actions fully.
+    The results of the workflows are released as GitHub Releases with `snapshot` tag.
+
+    They will later be placed in CGE binary download.
 
 - FPC is build, installed and packaged to a simple zip. Later, such bundle is included in CGE binary download.
 
@@ -36,6 +42,9 @@ At this point, these are both Jenkins and GitHub Actions jobs.
 
 ## Future
 
-- This may be extended to include extra platforms. Cross-compilers, in particular between `Linux/x86_64` and `Windows/x86_64` and to Android are nice ideas.
+- This may be extended to include cross-compilers. In particular
 
-- We may devise a similar idea for Lazarus IDE. While Lazarus IDE is not such *critical* need for FPC (you can even perform full build+run from CGE editor without Lazarus), but in the end we want to recommend people some Pascal IDE. We support anything (Lazarus, Delphi, VS Code, Emacs...) but still it's nice to recommend something for people new to Pascal.
+    - between `Linux/x86_64` and `Windows/x86_64`
+    - to Android (`Android/Arm`, `Android/Aarch64`), from all other platforms.
+
+- We may devise a similar idea for Lazarus IDE. While Lazarus IDE is not *critical* for CGE people, but it is necessary to recompile CGE editor, and thus to define per-project custom components in CGE.
