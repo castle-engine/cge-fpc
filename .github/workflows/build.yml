@@ -70,11 +70,25 @@ jobs:
           cd fpcsrc/
           make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc
 
+      - name: Add cross-compiler to Win64
+        if: ${{ matrix.runner != 'windows-latest' }}
+        run: |
+          cd fpcsrc/
+          make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc
+
+      - name: Add cross-compiler to macOS/Aarch64
+        if: ${{ matrix.runner == 'macos_x64' }}
+        run: |
+          cd fpcsrc/
+          make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc
+
       - name: (Post install) Make layout simple
         if: ${{ matrix.is_unix }}
         run: |
-          # Put ppcx64 in fpc/bin/, so that main fpc binary can find it easily
-          mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppcx64 fpc/bin/
+          # Put ppc??? and ppcross???, like ppcx64, in fpc/bin/, so that main fpc binary can find it easily
+          mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppc??? \
+                fpc/lib/fpc/"${FPC_VERSION}"/ppcross??? \
+                fpc/bin/
           # Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
           mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/
 
