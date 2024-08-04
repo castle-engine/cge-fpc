@@ -27,6 +27,7 @@ jobs:
         # - For now, in the end: using self-hosted macos_x64 for Intel mac.
         runner: [ubuntu-latest, windows-latest, macos_x64, raspberry_pi_64, raspberry_pi_32]
         include:
+          # Set matrix.is_unix, makes if conditions easier.
           - is_unix: false
           - runner: ubuntu-latest
             is_unix: true
@@ -36,22 +37,39 @@ jobs:
             is_unix: true
           - runner: raspberry_pi_32
             is_unix: true
+
+          # Set matrix.needs_fpc_fixes_branch, when you need FPC 3.2.3 (fixes_3_2 branch)
+          - needs_fpc_fixes_branch: false
+          - runner: raspberry_pi_64
+            needs_fpc_fixes_branch: true
+          - runner: raspberry_pi_32
+            needs_fpc_fixes_branch: true
     runs-on: ${{ matrix.runner }}
     steps:
       # No need to checkout, as we're not using the repository contents.
       # - uses: actions/checkout@v4
 
       # Get last stable FPC to bootstrap
-      - uses: actions/checkout@v4
       - name: Install FPC+Lazarus
+        if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'ubuntu-latest' }}
         uses: gcarreno/setup-lazarus@v3.2.17
         with:
           lazarus-version: stable
 
-      - name: Set environment FPC_BRANCHTAG
+      - name: Set environment FPC_BRANCHTAG (!needs_fpc_fixes_branch)
+        if : ${{ ! matrix.needs_fpc_fixes_branch }}
         run: echo FPC_BRANCHTAG='release_3_2_2' >> $GITHUB_ENV
-      - name: Set environment FPC_VERSION
+      - name: Set environment FPC_BRANCHTAG (needs_fpc_fixes_branch)
+        if : ${{ matrix.needs_fpc_fixes_branch }}
+        run: echo FPC_BRANCHTAG='fixes_3_2' >> $GITHUB_ENV
+
+      - name: Set environment FPC_VERSION (!needs_fpc_fixes_branch)
+        if : ${{ ! matrix.needs_fpc_fixes_branch }}
         run: echo FPC_VERSION='3.2.2' >> $GITHUB_ENV
+      - name: Set environment FPC_VERSION (needs_fpc_fixes_branch)
+        if : ${{ matrix.needs_fpc_fixes_branch }}
+        run: echo FPC_VERSION='3.2.3' >> $GITHUB_ENV
+
       - name: Set environment FPC_OS
         run: echo "FPC_OS="`fpc -iTO` >> $GITHUB_ENV
       - name: Set environment FPC_CPU
