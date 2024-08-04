@@ -44,8 +44,7 @@ jobs:
             needs_fpc_fixes_branch: true
     runs-on: ${{ matrix.runner }}
     steps:
-      # No need to checkout, as we're not using the repository contents.
-      # - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       # Get last stable FPC to bootstrap
       - name: Install FPC+Lazarus
@@ -84,7 +83,17 @@ jobs:
       - name: Build and install FPC
         run: |
           cd fpcsrc/
-          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc
+          case $FPC_CPU in
+            x86_64) PPC_NAME=ppcx64 ;;
+            aarch64) PPC_NAME=ppca64 ;;
+            arm) PPC_NAME=ppcarm ;;
+            *) PPC_NAME=ppc-unknown-name ;;
+          esac
+          if [ -f bootstrap-fpc/3.2.2/${PPC_NAME} ]; then
+            echo "Using precompiled FPC for bootstrap"
+            export BOOTSTRAP_FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
+          fi
+          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc $BOOTSTRAP_FPC
 
       - name: Add cross-compiler to Win64
         if: ${{ matrix.runner != 'windows-latest' }}
