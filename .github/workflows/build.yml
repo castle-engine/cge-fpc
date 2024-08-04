@@ -42,8 +42,6 @@ jobs:
           - needs_fpc_fixes_branch: false
           - runner: raspberry_pi_64
             needs_fpc_fixes_branch: true
-          - runner: raspberry_pi_32
-            needs_fpc_fixes_branch: true
     runs-on: ${{ matrix.runner }}
     steps:
       # No need to checkout, as we're not using the repository contents.
