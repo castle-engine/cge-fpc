@@ -80,20 +80,24 @@ jobs:
       - name: Get FPC sources
         run: git clone https://gitlab.com/freepascal.org/fpc/source.git --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc
 
+      - name: Determine bootstrap FPC
+        run: |
+          case $FPC_CPU in
+            x86_64)  PPC_NAME=ppcx64 ;;
+            aarch64) PPC_NAME=ppca64 ;;
+            arm)     PPC_NAME=ppcarm ;;
+            *)       PPC_NAME=ppc-unknown-name ;;
+          esac
+          echo "For this CPU, the FPC ppcxxx binary is called ${PPC_NAME}"
+          if [ -f "bootstrap-fpc/3.2.2/${PPC_NAME}" ]; then
+            export BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
+            echo "Using precompiled FPC for bootstrap: ${BOOTSTRAP_FPC}"
+          fi
+
       - name: Build and install FPC
         run: |
           cd fpcsrc/
-          case $FPC_CPU in
-            x86_64) PPC_NAME=ppcx64 ;;
-            aarch64) PPC_NAME=ppca64 ;;
-            arm) PPC_NAME=ppcarm ;;
-            *) PPC_NAME=ppc-unknown-name ;;
-          esac
-          if [ -f bootstrap-fpc/3.2.2/${PPC_NAME} ]; then
-            echo "Using precompiled FPC for bootstrap"
-            export BOOTSTRAP_FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
-          fi
-          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc $BOOTSTRAP_FPC
+          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC}
 
       - name: Add cross-compiler to Win64
         if: ${{ matrix.runner != 'windows-latest' }}
