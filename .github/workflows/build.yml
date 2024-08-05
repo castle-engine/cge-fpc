@@ -109,17 +109,23 @@ jobs:
           echo "Executing: " make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
           make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
 
-      - name: Add cross-compiler to Win64
-        if: ${{ matrix.runner != 'windows-latest' }}
-        run: |
-          cd fpcsrc/
-          make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
+      # TODO: enable this
+      # but it makes CGE pack_release job fail with "out of disk space" -- indeed FPC zips are larger.
+      # We need to have some way to auto-download FPC cross-compilers,
+      # to not include them in the CGE release.
+      #
+      # - name: Add cross-compiler to Win64
+      #   if: ${{ matrix.runner != 'windows-latest' }}
+      #   run: |
+      #     cd fpcsrc/
+      #     make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
 
-      - name: Add cross-compiler to macOS/Aarch64
-        if: ${{ matrix.runner == 'macos_x64' }}
-        run: |
-          cd fpcsrc/
-          make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
+      # TODO: test and enable
+      # - name: Add cross-compiler to macOS/Aarch64
+      #   if: ${{ matrix.runner == 'macos_x64' }}
+      #   run: |
+      #     cd fpcsrc/
+      #     make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
 
       - name: (Post install) Make layout simple
         if: ${{ matrix.is_unix }}
