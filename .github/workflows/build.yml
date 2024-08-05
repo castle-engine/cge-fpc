@@ -90,7 +90,7 @@ jobs:
           esac
           echo "For this CPU, the FPC ppcxxx binary is called ${PPC_NAME}"
           if [ -f "bootstrap-fpc/3.2.2/${PPC_NAME}" ]; then
-            BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
+            BOOTSTRAP_FPC=PP=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
             echo "BOOTSTRAP_FPC=${BOOTSTRAP_FPC}" >> $GITHUB_ENV
             echo "Using precompiled FPC for bootstrap: ${BOOTSTRAP_FPC}"
           fi
