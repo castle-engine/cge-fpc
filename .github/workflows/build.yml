@@ -25,9 +25,7 @@ jobs:
         # - TODO: "ld: library not found for -lc",
         #   see solutions on https://forum.lazarus.freepascal.org/index.php?topic=61430.15
         # - For now, in the end: using self-hosted macos_x64 for Intel mac.
-        runner: [ubuntu-latest, windows-latest, macos_x64,
-          #raspberry_pi_64,
-          raspberry_pi_32]
+        runner: [ubuntu-latest, windows-latest, macos_x64, raspberry_pi_64, raspberry_pi_32]
         include:
           # Set matrix.is_unix, makes if conditions easier.
           - is_unix: false
@@ -35,15 +33,15 @@ jobs:
             is_unix: true
           - runner: macos_x64
             is_unix: true
-          # - runner: raspberry_pi_64
-          #   is_unix: true
+          - runner: raspberry_pi_64
+            is_unix: true
           - runner: raspberry_pi_32
             is_unix: true
 
           # Set matrix.needs_fpc_fixes_branch, when you need FPC 3.2.3 (fixes_3_2 branch)
           - needs_fpc_fixes_branch: false
-          # - runner: raspberry_pi_64
-          #   needs_fpc_fixes_branch: true
+          - runner: raspberry_pi_64
+            needs_fpc_fixes_branch: true
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -94,7 +92,10 @@ jobs:
           esac
           echo "For this CPU, the FPC ppcxxx binary is called ${PPC_NAME}"
           if [ -f "bootstrap-fpc/3.2.2/${PPC_NAME}" ]; then
-            BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
+            # TODO: For unknown reason, providing FPC=... doesn't work, it's not used by make.
+            # It still complains that we try to build 3.2.2 with 3.2.3, despite we provide FPC=... with 3.2.2.
+            # BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
+            BOOTSTRAP_FPC=OVERRIDEVERSIONCHECK=1
             echo "BOOTSTRAP_FPC=${BOOTSTRAP_FPC}" >> $GITHUB_ENV
             echo "Using precompiled FPC for bootstrap: ${BOOTSTRAP_FPC}"
           fi
@@ -111,7 +112,7 @@ jobs:
           cd fpcsrc/
           echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
           echo "Executing: " make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
-          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}" --debug
+          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
 
       # TODO: enable this
       # but it makes CGE pack_release job fail with "out of disk space" -- indeed FPC zips are larger.
