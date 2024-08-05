@@ -90,13 +90,15 @@ jobs:
           esac
           echo "For this CPU, the FPC ppcxxx binary is called ${PPC_NAME}"
           if [ -f "bootstrap-fpc/3.2.2/${PPC_NAME}" ]; then
-            echo BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME} >> $GITHUB_ENV
+            BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
+            echo "BOOTSTRAP_FPC=${BOOTSTRAP_FPC}" >> $GITHUB_ENV
             echo "Using precompiled FPC for bootstrap: ${BOOTSTRAP_FPC}"
           fi
 
       - name: Build and install FPC
         run: |
           cd fpcsrc/
+          echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
           make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC}
 
       - name: Add cross-compiler to Win64
