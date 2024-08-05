@@ -109,7 +109,7 @@ jobs:
           cd fpcsrc/
           echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
           echo "Executing: " make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
-          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
+          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}" --debug
 
       # TODO: enable this
       # but it makes CGE pack_release job fail with "out of disk space" -- indeed FPC zips are larger.
