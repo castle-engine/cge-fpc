@@ -84,8 +84,10 @@ jobs:
         run: |
           case $FPC_CPU in
             x86_64)  PPC_NAME=ppcx64 ;;
+            i386)    PPC_NAME=ppc386 ;;
             aarch64) PPC_NAME=ppca64 ;;
             arm)     PPC_NAME=ppcarm ;;
+            # More possible: ppc68k ppcppc ppcsparc ppcarmeb ppcppc64 ppcmips ppcmipsel ppcavr ppcjvm ppc8086 ppcsparc64
             *)       PPC_NAME=ppc-unknown-name ;;
           esac
           echo "For this CPU, the FPC ppcxxx binary is called ${PPC_NAME}"
@@ -130,9 +132,8 @@ jobs:
       - name: (Post install) Make layout simple
         if: ${{ matrix.is_unix }}
         run: |
-          # Put ppc??? and ppcross???, like ppcx64, in fpc/bin/, so that main fpc binary can find it easily
-          mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppc??? \
-                fpc/lib/fpc/"${FPC_VERSION}"/ppcross??? \
+          # Put ppc* (including and ppcross*), like ppcx64, in fpc/bin/, so that main fpc binary can find it easily
+          mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppc* \
                 fpc/bin/
           # Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
           mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/
