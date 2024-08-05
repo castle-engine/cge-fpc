@@ -25,9 +25,7 @@ jobs:
         # - TODO: "ld: library not found for -lc",
         #   see solutions on https://forum.lazarus.freepascal.org/index.php?topic=61430.15
         # - For now, in the end: using self-hosted macos_x64 for Intel mac.
-        runner: [ubuntu-latest, windows-latest, macos_x64,
-          #raspberry_pi_64,
-          raspberry_pi_32]
+        runner: [ubuntu-latest, windows-latest, macos_x64, raspberry_pi_64, raspberry_pi_32]
         include:
           # Set matrix.is_unix, makes if conditions easier.
           - is_unix: false
@@ -92,7 +90,7 @@ jobs:
           esac
           echo "For this CPU, the FPC ppcxxx binary is called ${PPC_NAME}"
           if [ -f "bootstrap-fpc/3.2.2/${PPC_NAME}" ]; then
-            BOOTSTRAP_FPC=PP=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
+            BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
             echo "BOOTSTRAP_FPC=${BOOTSTRAP_FPC}" >> $GITHUB_ENV
             echo "Using precompiled FPC for bootstrap: ${BOOTSTRAP_FPC}"
           fi
@@ -101,6 +99,7 @@ jobs:
         run: |
           cd fpcsrc/
           echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
+          echo "Execcuting: " make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC}
           make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC}
 
       - name: Add cross-compiler to Win64
