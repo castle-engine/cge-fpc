@@ -95,24 +95,31 @@ jobs:
             echo "Using precompiled FPC for bootstrap: ${BOOTSTRAP_FPC}"
           fi
 
+      - name: Determine FPC options
+        if : ${{ matrix.runner == 'macos_x64' }}
+        run: |
+          # Following FpcUpDeluxe:
+          # MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard directory
+          echo FPC_OPTS='-XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib -FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin' >> $GITHUB_ENV
+
       - name: Build and install FPC
         run: |
           cd fpcsrc/
           echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
-          echo "Execcuting: " make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC}
-          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC}
+          echo "Executing: " make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
+          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
 
       - name: Add cross-compiler to Win64
         if: ${{ matrix.runner != 'windows-latest' }}
         run: |
           cd fpcsrc/
-          make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc
+          make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
 
       - name: Add cross-compiler to macOS/Aarch64
         if: ${{ matrix.runner == 'macos_x64' }}
         run: |
           cd fpcsrc/
-          make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc
+          make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
 
       - name: (Post install) Make layout simple
         if: ${{ matrix.is_unix }}
