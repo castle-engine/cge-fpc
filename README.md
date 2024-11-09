@@ -1,4 +1,4 @@
-# FPC (Free Pascal Compiler) version that is easy to distribute together with CGE.
+# FPC (Free Pascal Compiler) version that is easy to distribute together with CGE
 
 This repository contains our infrastructure to build FPC [Free Pascal Compiler](https://www.freepascal.org/) version that we can easily distribute together with [Castle Game Engine](https://castle-engine.io/download) binary download.
 
@@ -40,11 +40,11 @@ The scripts are organized in [GitHub Actions](https://castle-engine.io/github_ac
 
     Building FPC ourselves, as a simple zip for all platforms we need, is simplest.
 
+Note: We have also repo where we build Lazarus, https://github.com/castle-engine/cge-lazarus . But it has more limited use-case now (as we don't bundle Lazarus with CGE).
+
 ## Future
 
 - This may be extended to include cross-compilers. In particular
 
     - between `Linux/x86_64` and `Windows/x86_64`
     - to Android (`Android/Arm`, `Android/Aarch64`), from all other platforms.
-
-- We may devise a similar idea for Lazarus IDE. While Lazarus IDE is not *critical* for CGE people, but it is necessary to recompile CGE editor, and thus to define per-project custom components in CGE.
