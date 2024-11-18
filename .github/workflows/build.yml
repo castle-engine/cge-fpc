@@ -49,7 +49,7 @@ jobs:
       # Get last stable FPC to bootstrap
       - name: Install FPC+Lazarus
         if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'ubuntu-latest' }}
-        uses: gcarreno/setup-lazarus@v3.2.17
+        uses: gcarreno/setup-lazarus@v3.3.1
         with:
           lazarus-version: stable
 
