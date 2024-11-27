@@ -20,12 +20,22 @@ jobs:
     name: Build
     strategy:
       matrix:
-        # For macOS:
-        # - Old note: Using macos-12, not macos-latest, for Intel mac.
-        # - TODO: "ld: library not found for -lc",
-        #   see solutions on https://forum.lazarus.freepascal.org/index.php?topic=61430.15
-        # - For now, in the end: using self-hosted macos_x64 for Intel mac.
-        runner: [ubuntu-latest, windows-latest, macos_x64, raspberry_pi_64, raspberry_pi_32]
+        runner: [
+          ubuntu-latest,
+          windows-latest,
+
+          # For macOS:
+          # - Old note: Using macos-12, not macos-latest, for Intel mac.
+          # - TODO: "ld: library not found for -lc",
+          #   see solutions on https://forum.lazarus.freepascal.org/index.php?topic=61430.15
+          # - For now, in the end: using self-hosted macos_x64 for Intel mac.
+          macos_x64
+
+          # We use arm-runner for Raspberry Pi builds now, to not have costs of maintaining our own runners.
+          # TODO: Implement arm-runner usage; for now, we don't build FPC for Raspberry Pi.
+          #raspberry_pi_64,
+          #raspberry_pi_32
+        ]
         include:
           # Set matrix.is_unix, makes if conditions easier.
           - is_unix: false
@@ -33,15 +43,15 @@ jobs:
             is_unix: true
           - runner: macos_x64
             is_unix: true
-          - runner: raspberry_pi_64
-            is_unix: true
-          - runner: raspberry_pi_32
-            is_unix: true
+          # - runner: raspberry_pi_64
+          #   is_unix: true
+          # - runner: raspberry_pi_32
+          #   is_unix: true
 
           # Set matrix.needs_fpc_fixes_branch, when you need FPC 3.2.3 (fixes_3_2 branch)
           - needs_fpc_fixes_branch: false
-          - runner: raspberry_pi_64
-            needs_fpc_fixes_branch: true
+          # - runner: raspberry_pi_64
+          #   needs_fpc_fixes_branch: true
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
