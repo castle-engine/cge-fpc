@@ -54,7 +54,7 @@ jobs:
           #   needs_fpc_fixes_branch: true
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Get last stable FPC to bootstrap
       - name: Install FPC+Lazarus
