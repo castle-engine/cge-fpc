@@ -1,6 +1,6 @@
 # ----------------------------------------------------------------------------
-# GitHub Action workflow to build FPC to be bundled with CGE downloads
-# on https://castle-engine.io/download .
+# GitHub Action workflow to build FPC to be
+# bundled with CGE downloads on https://castle-engine.io/download .
 #
 # See https://docs.github.com/en/actions for docs.
 # ----------------------------------------------------------------------------
@@ -31,8 +31,11 @@ jobs:
           # - For now, in the end: using self-hosted macos_x64 for Intel mac.
           macos_x64
 
-          # We use arm-runner for Raspberry Pi builds now, to not have costs of maintaining our own runners.
-          # TODO: Implement arm-runner usage; for now, we don't build FPC for Raspberry Pi.
+          # We use arm-runner for Raspberry Pi builds now, to not have costs
+          # of maintaining our own Raspberry Pi runners.
+          # Inside arm-runner, we install FPC using from apt packages.
+          # We don't provide "bundled with FPC" packages for Raspberry Pi now.
+          # TODO: Implement arm-runner usage.
           #raspberry_pi_64,
           #raspberry_pi_32
         ]
