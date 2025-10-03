@@ -55,6 +55,22 @@ jobs:
           - needs_fpc_fixes_branch: false
           # - runner: raspberry_pi_64
           #   needs_fpc_fixes_branch: true
+
+          # Use FPC 3.2.3 on macOS, to avoid failures like:
+          #
+          # """
+          # Assembling rtti
+          # rtl-objpas/units/x86_64-darwin/rtti.s:12:1: error: non-private labels cannot appear between .cfi_startproc / .cfi_endproc pairs
+          # _$RTTI$_Lj102:
+          # ^
+          # rtl-objpas/units/x86_64-darwin/rtti.s:6:1: error: previous .cfi_startproc was here
+          # """
+          #
+          # Fixe in FPC, see
+          # https://github.com/LongDirtyAnimAlf/fpcupdeluxe/issues/745
+          # https://gitlab.com/freepascal.org/fpc/source/-/commit/e749c81040070d3e8cb0c070e6e63f2f9b54fef4
+          - runner: macos_x64
+            needs_fpc_fixes_branch: true
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
