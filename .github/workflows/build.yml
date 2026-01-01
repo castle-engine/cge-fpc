@@ -23,38 +23,26 @@ jobs:
         runner: [
           ubuntu-latest,
           windows-latest,
-
-          # For macOS:
-          # - Old note: Using macos-12, not macos-latest, for Intel mac.
-          # - TODO: "ld: library not found for -lc",
-          #   see solutions on https://forum.lazarus.freepascal.org/index.php?topic=61430.15
-          # - For now, in the end: using self-hosted macos_x64 for Intel mac.
-          macos_x64
-
-          # We use arm-runner for Raspberry Pi builds now, to not have costs
-          # of maintaining our own Raspberry Pi runners.
-          # Inside arm-runner, we install FPC using from apt packages.
-          # We don't provide "bundled with FPC" packages for Raspberry Pi now.
-          # TODO: Implement arm-runner usage.
-          #raspberry_pi_64,
-          #raspberry_pi_32
+          # last macOS using Intel
+          macos-15-intel,
+          macos-latest
         ]
         include:
-          # Set matrix.is_unix, makes if conditions easier.
-          - is_unix: false
-          - runner: ubuntu-latest
-            is_unix: true
-          - runner: macos_x64
-            is_unix: true
-          # - runner: raspberry_pi_64
-          #   is_unix: true
-          # - runner: raspberry_pi_32
-          #   is_unix: true
+          # Set matrix.is_unix, makes later "if" conditions easier.
+          - is_unix: true
+          - runner: windows-latest
+            is_unix: false
 
-          # Set matrix.needs_fpc_fixes_branch, when you need FPC 3.2.3 (fixes_3_2 branch)
+          # Set matrix.is_macos, makes later "if" conditions easier.
+          - is_macos: false
+          - runner: macos-latest
+            is_macos: true
+          - runner: macos-15-intel
+            is_macos: true
+
+          # Set matrix.needs_fpc_fixes_branch, says do we need FPC 3.2.3
+          # (fixes_3_2 branch) instead of FPC 3.2.2 (last stable).
           - needs_fpc_fixes_branch: false
-          # - runner: raspberry_pi_64
-          #   needs_fpc_fixes_branch: true
 
           # Use FPC 3.2.3 on macOS, to avoid failures like:
           #
@@ -69,31 +57,38 @@ jobs:
           # Fixe in FPC, see
           # https://github.com/LongDirtyAnimAlf/fpcupdeluxe/issues/745
           # https://gitlab.com/freepascal.org/fpc/source/-/commit/e749c81040070d3e8cb0c070e6e63f2f9b54fef4
-          - runner: macos_x64
+          - runner: macos-latest
             needs_fpc_fixes_branch: true
+          - runner: macos-15-intel
+            needs_fpc_fixes_branch: true
+
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6
 
       # Get last stable FPC (for some platforms: to bootstrap, for all platforms: to answer -iTO/iTP/iSP/iSO queries)
-      - name: Install FPC+Lazarus
-        if: ${{ matrix.runner == 'windows-latest' || matrix.runner == 'ubuntu-latest' }}
+      - name: Install FPC+Lazarus (not macOS)
+        if: ${{ ! matrix.is_macos }}
         uses: gcarreno/setup-lazarus@v3.3.1
         with:
           lazarus-version: stable
 
+      - name: Install FPC+Lazarus (macOS)
+        if: ${{ matrix.is_macos }}
+        run: brew install fpc
+
       - name: Set environment FPC_BRANCHTAG (!needs_fpc_fixes_branch)
-        if : ${{ ! matrix.needs_fpc_fixes_branch }}
+        if: ${{ ! matrix.needs_fpc_fixes_branch }}
         run: echo FPC_BRANCHTAG='release_3_2_2' >> $GITHUB_ENV
       - name: Set environment FPC_BRANCHTAG (needs_fpc_fixes_branch)
-        if : ${{ matrix.needs_fpc_fixes_branch }}
+        if: ${{ matrix.needs_fpc_fixes_branch }}
         run: echo FPC_BRANCHTAG='fixes_3_2' >> $GITHUB_ENV
 
       - name: Set environment FPC_VERSION (!needs_fpc_fixes_branch)
-        if : ${{ ! matrix.needs_fpc_fixes_branch }}
+        if: ${{ ! matrix.needs_fpc_fixes_branch }}
         run: echo FPC_VERSION='3.2.2' >> $GITHUB_ENV
       - name: Set environment FPC_VERSION (needs_fpc_fixes_branch)
-        if : ${{ matrix.needs_fpc_fixes_branch }}
+        if: ${{ matrix.needs_fpc_fixes_branch }}
         run: echo FPC_VERSION='3.2.3' >> $GITHUB_ENV
 
       - name: Set environment FPC_OS
@@ -132,7 +127,7 @@ jobs:
           fi
 
       - name: Determine FPC options
-        if : ${{ matrix.runner == 'macos_x64' }}
+        if : ${{ matrix.is_macos }}
         run: |
           # Following FpcUpDeluxe:
           # MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard directory
@@ -156,9 +151,9 @@ jobs:
       #     cd fpcsrc/
       #     make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
 
-      # TODO: test and enable
+      # TODO: test and enable this on macOS/Intel
       # - name: Add cross-compiler to macOS/Aarch64
-      #   if: ${{ matrix.runner == 'macos_x64' }}
+      #   if: ${{ matrix.runner == 'macos-15-intel' }}
       #   run: |
       #     cd fpcsrc/
       #     make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
