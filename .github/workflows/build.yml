@@ -155,7 +155,7 @@ jobs:
             exit 1
           fi
 
-          echo "BOOTSTRAP_FPC=PPC=${PPC_NAME}" >> $GITHUB_ENV
+          echo "BOOTSTRAP_FPC=FPC=${PPC_NAME}" >> $GITHUB_ENV
 
           # Note:
           # Adding OVERRIDEVERSIONCHECK=1 to make command is no longer necessary.
