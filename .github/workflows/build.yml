@@ -43,7 +43,6 @@ jobs:
           # Set matrix.needs_fpc_fixes_branch, says do we need FPC 3.2.3
           # (fixes_3_2 branch) instead of FPC 3.2.2 (last stable).
           - needs_fpc_fixes_branch: false
-
           # Use FPC 3.2.3 on macOS, to avoid failures like:
           #
           # """
@@ -54,7 +53,7 @@ jobs:
           # rtl-objpas/units/x86_64-darwin/rtti.s:6:1: error: previous .cfi_startproc was here
           # """
           #
-          # Fixe in FPC, see
+          # Fixed in FPC, see
           # https://github.com/LongDirtyAnimAlf/fpcupdeluxe/issues/745
           # https://gitlab.com/freepascal.org/fpc/source/-/commit/e749c81040070d3e8cb0c070e6e63f2f9b54fef4
           - runner: macos-latest
@@ -62,20 +61,40 @@ jobs:
           - runner: macos-15-intel
             needs_fpc_fixes_branch: true
 
+          # Set matrix.fpc_os, matrix.fpc_cpu .
+          # These are OS and CPU names following FPC naming convention,
+          # exactly as if from
+          # - fpc -iTO / -iSO (target/source OS)
+          # - fpc -iTP / -iSP (target/source CPU)
+          - fpc_os: linux
+            fpc_cpu: x86_64
+          - runner: windows-latest
+            fpc_os: win64
+            fpc_cpu: x86_64
+          - runner: macos-latest
+            fpc_os: darwin
+            fpc_cpu: aarch64
+          - runner: macos-15-intel
+            fpc_os: darwin
+            fpc_cpu: x86_64
+
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6
 
-      # Get last stable FPC (for some platforms: to bootstrap, for all platforms: to answer -iTO/iTP/iSP/iSO queries)
-      - name: Install FPC+Lazarus (not macOS)
-        if: ${{ ! matrix.is_macos }}
-        uses: gcarreno/setup-lazarus@v3.3.1
-        with:
-          lazarus-version: stable
-
-      - name: Install FPC+Lazarus (macOS)
-        if: ${{ matrix.is_macos }}
-        run: brew install fpc
+      # Old approach:
+      # Get last stable FPC to bootstrap.
+      # Now: This is no longer used: we rely fully on our bootstrap-fpc/ subdirectory.
+      #
+      # - name: Install FPC+Lazarus (not macOS)
+      #   if: ${{ ! matrix.is_macos }}
+      #   uses: gcarreno/setup-lazarus@v3.3.1
+      #   with:
+      #     lazarus-version: stable
+      #
+      # - name: Install FPC+Lazarus (macOS)
+      #   if: ${{ matrix.is_macos }}
+      #   run: brew install fpc
 
       - name: Set environment FPC_BRANCHTAG (!needs_fpc_fixes_branch)
         if: ${{ ! matrix.needs_fpc_fixes_branch }}
@@ -90,11 +109,8 @@ jobs:
       - name: Set environment FPC_VERSION (needs_fpc_fixes_branch)
         if: ${{ matrix.needs_fpc_fixes_branch }}
         run: echo FPC_VERSION='3.2.3' >> $GITHUB_ENV
-
-      - name: Set environment FPC_OS
-        run: echo "FPC_OS="`fpc -iTO` >> $GITHUB_ENV
-      - name: Set environment FPC_CPU
-        run: echo "FPC_CPU="`fpc -iTP` >> $GITHUB_ENV
+      - name: Set environment FPC_ZIP_NAME
+        run: echo FPC_ZIP_NAME='fpc-${{ matrix.fpc_os }}-${{ matrix.fpc_cpu }}.zip' >> $GITHUB_ENV
 
       - name: Cleanup
         run: |
@@ -106,25 +122,39 @@ jobs:
 
       - name: Determine bootstrap FPC
         run: |
-          case $FPC_CPU in
-            x86_64)  PPC_NAME=ppcx64 ;;
-            i386)    PPC_NAME=ppc386 ;;
-            aarch64) PPC_NAME=ppca64 ;;
-            arm)     PPC_NAME=ppcarm ;;
+          # calculate PPC_SUFFIX
+          case "${{ matrix.fpc_cpu }}" in
+            x86_64)  PPC_SUFFIX=ppcx64 ;;
+            i386)    PPC_SUFFIX=ppc386 ;;
+            aarch64) PPC_SUFFIX=ppca64 ;;
+            arm)     PPC_SUFFIX=ppcarm ;;
             # More possible: ppc68k ppcppc ppcsparc ppcarmeb ppcppc64 ppcmips ppcmipsel ppcavr ppcjvm ppc8086 ppcsparc64
-            *)       PPC_NAME=ppc-unknown-name ;;
+            *)
+              echo "Precompiled FPC for bootstrap cannot be determined, cannot determine PPC_SUFFIX for this CPU: ${{ matrix.fpc_cpu }}"
+              exit 1
+            ;;
           esac
-          # prepend the source OS/CPU to the binary name, since we must be able to execute it here
-          PPC_NAME=from-`fpc -iSP`-`fpc -iSO`/"${PPC_NAME}"
-          echo "For this CPU, the FPC ppcxxx binary is called ${PPC_NAME}"
-          if [ -f "bootstrap-fpc/3.2.2/${PPC_NAME}" ]; then
-            # TODO: For unknown reason, providing FPC=... doesn't work, it's not used by make.
-            # It still complains that we try to build 3.2.2 with 3.2.3, despite we provide FPC=... with 3.2.2.
-            # BOOTSTRAP_FPC=FPC=`pwd`/bootstrap-fpc/3.2.2/${PPC_NAME}
-            BOOTSTRAP_FPC=OVERRIDEVERSIONCHECK=1
-            echo "BOOTSTRAP_FPC=${BOOTSTRAP_FPC}" >> $GITHUB_ENV
-            echo "Using precompiled FPC for bootstrap: ${BOOTSTRAP_FPC}"
+          echo "PPC suffix: ${PPC_SUFFIX}"
+
+          # calculate PPC_NAME
+          # Prepend to the binary name:
+          # - source OS/CPU (from-....) since we must be able to execute it on this system
+          # - required bootstrap version
+          PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${{ matrix.fpc_cpu }}-${{ matrix.fpc_os }}/${PPC_SUFFIX}"
+          echo "PPC full filename for bootstrap: ${PPC_NAME}"
+
+          # check PPC_NAME exists
+          if [ ! -f "${PPC_NAME}"" ]; then
+            echo "Precompiled FPC for bootstrap not found: ${PPC_NAME}"
+            exit 1
           fi
+
+          echo "BOOTSTRAP_FPC=${PPC_NAME}" >> $GITHUB_ENV
+
+          # Note:
+          # Adding OVERRIDEVERSIONCHECK=1 to make command is no longer necessary.
+          # We use FPC 3.2.2 for bootstrap, which follows requirements for
+          # reliable bootstrapping.
 
       - name: Determine FPC options
         if : ${{ matrix.is_macos }}
@@ -185,7 +215,7 @@ jobs:
 
       - name: Archive (zip)
         if: ${{ matrix.runner != 'windows-latest' }}
-        run: zip -r fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
+        run: zip -r ${FPC_ZIP_NAME} fpc/
 
       # Use 7z on Windows to make zip, as it's preinstalled on GH hosted Windows.
       # ( We could alternatively install zip, e.g. using Chocolatey,
@@ -194,19 +224,19 @@ jobs:
       # see https://stackoverflow.com/questions/74939762/create-zip-file-of-github-reporitory-using-a-workflow-which-runs-on-windows-lat )
       - name: Archive (7z)
         if: ${{ matrix.runner == 'windows-latest' }}
-        run: 7z a fpc-${FPC_OS}-${FPC_CPU}.zip fpc/
+        run: 7z a ${FPC_ZIP_NAME} fpc/
 
       # No need for artifacts actually? This job just updates GH release "snapshot",
       # and other things (like CGE build with bundled FPC) can just download it.
       # - name: Archive Artifacts
       #   uses: actions/upload-artifact@v4
       #   with:
-      #     name: fpc-${{ env.FPC_OS }}-${{ env.FPC_CPU }}-release
+      #     name: fpc-${{ matrix.fpc_os }}-${{ matrix.fpc_cpu }}-release
       #     path: "fpc-*.zip"
       #     if-no-files-found: error
 
       - name: Release Artifacts
         if: ${{ github.ref == 'refs/heads/master' }}
-        run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber fpc-*.zip
+        run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber ${FPC_ZIP_NAME}
         env:
           GH_TOKEN: ${{ github.token }}
