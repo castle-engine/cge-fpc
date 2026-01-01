@@ -28,39 +28,6 @@ jobs:
           macos-latest
         ]
         include:
-          # Set matrix.is_unix, makes later "if" conditions easier.
-          - is_unix: true
-          - runner: windows-latest
-            is_unix: false
-
-          # Set matrix.is_macos, makes later "if" conditions easier.
-          - is_macos: false
-          - runner: macos-latest
-            is_macos: true
-          - runner: macos-15-intel
-            is_macos: true
-
-          # Set matrix.needs_fpc_fixes_branch, says do we need FPC 3.2.3
-          # (fixes_3_2 branch) instead of FPC 3.2.2 (last stable).
-          - needs_fpc_fixes_branch: false
-          # Use FPC 3.2.3 on macOS, to avoid failures like:
-          #
-          # """
-          # Assembling rtti
-          # rtl-objpas/units/x86_64-darwin/rtti.s:12:1: error: non-private labels cannot appear between .cfi_startproc / .cfi_endproc pairs
-          # _$RTTI$_Lj102:
-          # ^
-          # rtl-objpas/units/x86_64-darwin/rtti.s:6:1: error: previous .cfi_startproc was here
-          # """
-          #
-          # Fixed in FPC, see
-          # https://github.com/LongDirtyAnimAlf/fpcupdeluxe/issues/745
-          # https://gitlab.com/freepascal.org/fpc/source/-/commit/e749c81040070d3e8cb0c070e6e63f2f9b54fef4
-          - runner: macos-latest
-            needs_fpc_fixes_branch: true
-          - runner: macos-15-intel
-            needs_fpc_fixes_branch: true
-
           # Set matrix.fpc_os, matrix.fpc_cpu .
           # These are OS and CPU names following FPC naming convention,
           # exactly as if from
@@ -97,144 +64,12 @@ jobs:
       #   if: ${{ matrix.is_macos }}
       #   run: brew install fpc
 
-      - name: Set environment FPC_BRANCHTAG (!needs_fpc_fixes_branch)
-        if: ${{ ! matrix.needs_fpc_fixes_branch }}
-        run: echo FPC_BRANCHTAG='release_3_2_2' >> $GITHUB_ENV
-      - name: Set environment FPC_BRANCHTAG (needs_fpc_fixes_branch)
-        if: ${{ matrix.needs_fpc_fixes_branch }}
-        run: echo FPC_BRANCHTAG='fixes_3_2' >> $GITHUB_ENV
+      - name: Build FPC
+        run: ./build_fpc ${FPC_OS} ${FPC_CPU}
 
-      - name: Set environment FPC_VERSION (!needs_fpc_fixes_branch)
-        if: ${{ ! matrix.needs_fpc_fixes_branch }}
-        run: echo FPC_VERSION='3.2.2' >> $GITHUB_ENV
-      - name: Set environment FPC_VERSION (needs_fpc_fixes_branch)
-        if: ${{ matrix.needs_fpc_fixes_branch }}
-        run: echo FPC_VERSION='3.2.3' >> $GITHUB_ENV
-      - name: Set environment FPC_ZIP_NAME
-        run: echo FPC_ZIP_NAME='fpc-${{ matrix.fpc_os }}-${{ matrix.fpc_cpu }}.zip' >> $GITHUB_ENV
-
-      - name: Cleanup
-        run: |
-          rm -Rf fpcsrc/ fpc/ fpc-*.zip
-          mkdir -p fpc/
-
-      - name: Get FPC sources
-        run: git clone https://gitlab.com/freepascal.org/fpc/source.git --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc
-
-      - name: Determine bootstrap FPC
-        run: |
-          # calculate PPC_SUFFIX
-          case "${{ matrix.fpc_cpu }}" in
-            x86_64)  PPC_SUFFIX=ppcx64 ;;
-            i386)    PPC_SUFFIX=ppc386 ;;
-            aarch64) PPC_SUFFIX=ppca64 ;;
-            arm)     PPC_SUFFIX=ppcarm ;;
-            # More possible: ppc68k ppcppc ppcsparc ppcarmeb ppcppc64 ppcmips ppcmipsel ppcavr ppcjvm ppc8086 ppcsparc64
-            *)
-              echo "Precompiled FPC for bootstrap cannot be determined, cannot determine PPC_SUFFIX for this CPU: ${{ matrix.fpc_cpu }}"
-              exit 1
-            ;;
-          esac
-          if [ "${{ matrix.fpc_os }}" = "win64" -o "${{ matrix.fpc_os }}" = "win32" ]; then
-            PPC_SUFFIX="${PPC_SUFFIX}.exe"
-          fi
-          echo "PPC suffix: ${PPC_SUFFIX}"
-
-          # calculate PPC_NAME
-          # Prepend to the binary name:
-          # - source OS/CPU (from-....) since we must be able to execute it on this system
-          # - required bootstrap version
-          PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${{ matrix.fpc_cpu }}-${{ matrix.fpc_os }}/${PPC_SUFFIX}"
-          echo "PPC full filename for bootstrap: ${PPC_NAME}"
-
-          echo "PPC version is "`${PPC_NAME} -iV`
-
-          # check PPC_NAME exists
-          if [ ! -f "${PPC_NAME}" ]; then
-            echo "Precompiled FPC for bootstrap not found: ${PPC_NAME}"
-            exit 1
-          fi
-
-          echo "BOOTSTRAP_FPC=FPC=${PPC_NAME}" >> $GITHUB_ENV
-
-
-      - name: Determine FPC options
-        if : ${{ matrix.is_macos }}
-        run: |
-          # Following FpcUpDeluxe:
-          # MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard directory
-          echo FPC_OPTS='-XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib -FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin' >> $GITHUB_ENV
-
-      - name: Build and install FPC
-        run: |
-          cd fpcsrc/
-          echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
-
-          # TODO: Adding OVERRIDEVERSIONCHECK=1 should not be needed.
-          # We use FPC 3.2.2 for bootstrap, which follows requirements for
-          # reliable bootstrapping.
-          # Why does it fail without OVERRIDEVERSIONCHECK=1 ?
-          # Our bootstrap ppc reports as 3.2.2.
-
-          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OVERRIDEVERSIONCHECK=1 OPT="${FPC_OPTS}"
-
-      # TODO: enable this
-      # but it makes CGE pack_release job fail with "out of disk space" -- indeed FPC zips are larger.
-      # We need to have some way to auto-download FPC cross-compilers,
-      # to not include them in the CGE release.
-      #
-      # - name: Add cross-compiler to Win64
-      #   if: ${{ matrix.runner != 'windows-latest' }}
-      #   run: |
-      #     cd fpcsrc/
-      #     make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
-
-      # TODO: test and enable this on macOS/Intel
-      # - name: Add cross-compiler to macOS/Aarch64
-      #   if: ${{ matrix.runner == 'macos-15-intel' }}
-      #   run: |
-      #     cd fpcsrc/
-      #     make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
-
-      - name: (Post install) Make layout simple
-        if: ${{ matrix.is_unix }}
-        run: |
-          # Put ppc* (including and ppcross*), like ppcx64, in fpc/bin/, so that main fpc binary can find it easily
-          mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppc* \
-                fpc/bin/
-          # Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
-          mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/
-
-      - name: (Post install) Flatten fpc/bin
-        if: ${{ matrix.runner == 'windows-latest' }}
-        run: |
-          mv -f fpc/bin/x86_64-win64/* fpc/bin/
-          # Remove empty unneeded dir
-          rm -R fpc/bin/x86_64-win64/
-
-      - name: Sources to fpc/src
-        # See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
-        # This way we only copy to fpc/src files from repo (not any compiled stuff,
-        # and "make clean" doesn't really clean everything; and not .git subdir).
-        run: |
-          cd fpcsrc/
-          mkdir ../fpc/src
-          git archive HEAD | tar -x -C ../fpc/src
-
-      - name: Archive (zip)
-        if: ${{ matrix.runner != 'windows-latest' }}
-        run: zip -r ${FPC_ZIP_NAME} fpc/
-
-      # Use 7z on Windows to make zip, as it's preinstalled on GH hosted Windows.
-      # ( We could alternatively install zip, e.g. using Chocolatey,
-      # or use PowerShell
-      # "run: Compress-Archive -Path folder/ -Destination new.zip"
-      # see https://stackoverflow.com/questions/74939762/create-zip-file-of-github-reporitory-using-a-workflow-which-runs-on-windows-lat )
-      - name: Archive (7z)
-        if: ${{ matrix.runner == 'windows-latest' }}
-        run: 7z a ${FPC_ZIP_NAME} fpc/
-
-      # No need for artifacts actually? This job just updates GH release "snapshot",
+      # Old approach:
+      # Get artifacts.
+      # No need for this now. This job just updates GH release "snapshot",
       # and other things (like CGE build with bundled FPC) can just download it.
       # - name: Archive Artifacts
       #   uses: actions/upload-artifact@v4
@@ -245,6 +80,6 @@ jobs:
 
       - name: Release Artifacts
         if: ${{ github.ref == 'refs/heads/master' }}
-        run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber ${FPC_ZIP_NAME}
+        run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber fpc-*.zip
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,0 +1,196 @@
+#!/bin/bash
+set -xeuo pipefail
+
+# ---------------------------------------------------------------------
+# Build "best stable" FPC version from sources.
+# The "best stable" means now:
+# - 3.2.2
+# - or 3.2.3 for some platforms (determined inside this script)
+#
+# Arguments:
+# $1 is OS, $2 is CPU.
+#
+#   Must follow exactly FPC's naming convention for
+#   - fpc -iTO / -iSO (target/source OS)
+#   - fpc -iTP / -iSP (target/source CPU)
+#   E.g. CPU is x86_64 (never x64).
+#   E.g. OS is win64 or win32 (strictly depending on CPU architecture of Windows,
+#   in contrast to some other conventions that may use "windows" or "win32"
+#   for both 32-bit and 64-bit Windows).
+#
+# Right now they determine both source and target OS/CPU for the main compiler
+# we build. On some platforms, we may add cross-compilers.
+#
+# Assumes:
+# - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
+#
+# Uses bash strict mode
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+# ---------------------------------------------------------------------
+
+FPC_OS=$1
+FPC_CPU=$2
+shift 2
+
+# calculate FPC_ZIP_NAME
+FPC_ZIP_NAME="fpc-${FPC_OS}-${FPC_CPU}.zip"
+
+# calculate IS_UNIX, IS_WINDOWS (happen to be negation of each other now)
+if [ "${FPC_OS}" = "win64" -o "${FPC_OS}" = "win32" ]; then
+  IS_UNIX=false
+  IS_WINDOWS=true
+else
+  IS_UNIX=true
+  IS_WINDOWS=false
+fi
+
+# calculate NEEDS_FPC_FIXES_BRANCH
+if [ "${FPC_OS}" = "darwin" ]; then
+  # Use FPC 3.2.3 on macOS, to avoid failures like:
+  #
+  # """
+  # Assembling rtti
+  # rtl-objpas/units/x86_64-darwin/rtti.s:12:1: error: non-private labels cannot appear between .cfi_startproc / .cfi_endproc pairs
+  # _$RTTI$_Lj102:
+  # ^
+  # rtl-objpas/units/x86_64-darwin/rtti.s:6:1: error: previous .cfi_startproc was here
+  # """
+  #
+  # Fixed in FPC, see
+  # https://github.com/LongDirtyAnimAlf/fpcupdeluxe/issues/745
+  # https://gitlab.com/freepascal.org/fpc/source/-/commit/e749c81040070d3e8cb0c070e6e63f2f9b54fef4
+  NEEDS_FPC_FIXES_BRANCH=true
+else
+  NEEDS_FPC_FIXES_BRANCH=false
+fi
+
+if [ "${NEEDS_FPC_FIXES_BRANCH}" = "true" ]; then
+  FPC_BRANCHTAG="fixes_3_2"
+  FPC_VERSION="3.2.3"
+else
+  FPC_BRANCHTAG="release_3_2_2"
+  FPC_VERSION="3.2.2"
+fi
+
+# cleanup
+rm -Rf fpcsrc/ fpc/ fpc-*.zip
+mkdir -p fpc/
+
+# get FPC sources
+git clone https://gitlab.com/freepascal.org/fpc/source.git \
+  --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc
+
+# calculate BOOTSTRAP_PPC_SUFFIX
+case "${FPC_CPU}" in
+  x86_64)  BOOTSTRAP_PPC_SUFFIX=ppcx64 ;;
+  i386)    BOOTSTRAP_PPC_SUFFIX=ppc386 ;;
+  aarch64) BOOTSTRAP_PPC_SUFFIX=ppca64 ;;
+  arm)     BOOTSTRAP_PPC_SUFFIX=ppcarm ;;
+  # More possible: ppc68k ppcppc ppcsparc ppcarmeb ppcppc64 ppcmips ppcmipsel ppcavr ppcjvm ppc8086 ppcsparc64
+  *)
+    echo "Precompiled FPC for bootstrap cannot be determined, cannot determine BOOTSTRAP_PPC_SUFFIX for this CPU: ${FPC_CPU}"
+    exit 1
+  ;;
+esac
+if [ "${IS_WINDOWS}" = "true" ]; then
+  BOOTSTRAP_PPC_SUFFIX="${BOOTSTRAP_PPC_SUFFIX}.exe"
+fi
+echo "Bootstrap PPC suffix: ${BOOTSTRAP_PPC_SUFFIX}"
+
+# calculate BOOTSTRAP_PPC_NAME
+# Prepend to the binary name:
+# - source OS/CPU (from-....) since we must be able to execute it on this system
+# - required bootstrap version
+BOOTSTRAP_PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${{ matrix.fpc_cpu }}-${{ matrix.fpc_os }}/${BOOTSTRAP_PPC_SUFFIX}"
+echo "Bootstrap PPC full filename: ${BOOTSTRAP_PPC_NAME}"
+
+# check BOOTSTRAP_PPC_NAME exists
+# (later "make ..." call will also check it, but we prefer to check it earlier
+# and show clear error message on fail)
+if [ ! -f "${BOOTSTRAP_PPC_NAME}" ]; then
+  echo "Precompiled FPC for bootstrap not found: ${BOOTSTRAP_PPC_NAME}"
+  exit 1
+fi
+
+# check BOOTSTRAP_PPC_NAME version
+# (later "make ..." call will also check it unless we use OVERRIDEVERSIONCHECK=1)
+VALID_BOOTSTRAP_PPC_VERSION='3.2.2'
+CURRENT_BOOTSTRAP_PPC_VERSION=`${BOOTSTRAP_PPC_NAME} -iV`
+echo "Bootstrap PPC version is ${CURRENT_BOOTSTRAP_PPC_VERSION}."
+if [ "${CURRENT_BOOTSTRAP_PPC_VERSION}" != "${VALID_BOOTSTRAP_PPC_VERSION}" ]; then
+  echo "Precompiled FPC for bootstrap has wrong version. Expected ${VALID_BOOTSTRAP_PPC_VERSION}, found ${CURRENT_BOOTSTRAP_PPC_VERSION}."
+  exit 1
+fi
+
+if [ "${FPC_OS}" = "darwin" ]; then
+  # Following FpcUpDeluxe:
+  # MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard directory
+  FPC_OPTS='-XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib -FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin'
+else
+  FPC_OPTS=''
+fi
+
+# TODO: Adding OVERRIDEVERSIONCHECK=1 should not be needed.
+# We use FPC 3.2.2 for bootstrap, which follows requirements for
+# reliable bootstrapping.
+# Why does it fail without OVERRIDEVERSIONCHECK=1 ?
+# Our bootstrap ppc reports as 3.2.2.
+
+# main building command
+cd fpcsrc/
+make clean all install \
+  INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc \
+  FPC=${BOOTSTRAP_PPC_NAME} \
+  OVERRIDEVERSIONCHECK=1 \
+  OPT="${FPC_OPTS}"
+
+# TODO: Enable cross-compiler to Win64 from other systems.
+# In the past this was making CGE pack_release job fail with "out of disk space"
+# but it should be fixed now. -- indeed FPC zips are larger.
+# TODO: Even better would be to have some way to auto-download FPC cross-compilers,
+# to not include them in the CGE release.
+# if [ "${FPC_OS}" != "win64" -o "${FPC_CPU}" != "x86_64" ]; then
+#   make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
+# fi
+
+# TODO: Enable cross-compiler to macOS/Aarch64 from macOS/Intel.
+# if [ "${FPC_OS}" = "darwin" -a "${FPC_CPU}" = "x86_64" ]; then
+#   make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
+# fi
+
+# back to main dir, with fpc/ and fpcsrc/ as subdirs
+cd ../
+
+# Make layout simple
+if [ "${IS_UNIX}" = "true" ]; then
+  # Put ppc* (including and ppcross*), like ppcx64, in fpc/bin/, so that main fpc binary can find it easily
+  mv -f fpc/lib/fpc/"${FPC_VERSION}"/ppc* fpc/bin/
+
+  # Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
+  mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/
+else
+  mv -f fpc/bin/x86_64-win64/* fpc/bin/
+  # Remove empty unneeded dir
+  rm -R fpc/bin/x86_64-win64/
+fi
+
+# Copy sources to fpc/src
+# See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
+# This way we only copy to fpc/src files from repo (not any compiled stuff,
+# and "make clean" doesn't really clean everything; and not .git subdir).
+cd fpcsrc/
+mkdir ../fpc/src
+git archive HEAD | tar -x -C ../fpc/src
+cd ../ # back to top-level
+
+# pack to zip.
+if which 7z > /dev/null; then
+  # Use 7z on Windows to make zip, as it's preinstalled on GH hosted Windows.
+  # ( We could alternatively install zip, e.g. using Chocolatey,
+  # or use PowerShell
+  # "run: Compress-Archive -Path folder/ -Destination new.zip"
+  # see https://stackoverflow.com/questions/74939762/create-zip-file-of-github-reporitory-using-a-workflow-which-runs-on-windows-lat )
+  7z a ${FPC_ZIP_NAME} fpc/
+else
+  zip -r ${FPC_ZIP_NAME} fpc/
+fi
