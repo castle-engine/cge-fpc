@@ -34,7 +34,10 @@ set -xeuo pipefail
 # - Debug on local machine. You can actually just run this script on your
 #   local machine, and it should work equally well interactively.
 # - No need for GHA specific tricks to define
-#   environment variables using $GITHUB_ENV . Less reliance on GHA.
+#   environment variables using $GITHUB_ENV . Less reliance on GHA,
+#   for when we move away from GitHub.
+# - Easier to run from "ARM Runners" which require special setup in YAML,
+#   but can then reuse this script.
 #
 # Uses bash strict mode
 # http://redsymbol.net/articles/unofficial-bash-strict-mode/
