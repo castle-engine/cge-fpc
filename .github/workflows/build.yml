@@ -128,7 +128,7 @@ jobs:
 
             # on 32-bit Raspberry Pi, we rely on system-wide FPC
             if [ "${{ matrix.arch }}" = "raspberry-pi-32" ]; then
-              sudo apt-get --no-install-recommends -y fpc
+              sudo apt-get --no-install-recommends -y install fpc
             fi
 
             # run build_fpc
