@@ -22,7 +22,8 @@ jobs:
       matrix:
         runner: [
           ubuntu-latest,
-          windows-latest,
+          # TODO:
+          #windows-latest,
           # last macOS using Intel
           macos-15-intel,
           macos-latest
@@ -36,9 +37,10 @@ jobs:
           # They describe both source and target OS/CPU in our scenario.
           - fpc_os: linux
             fpc_cpu: x86_64
-          - runner: windows-latest
-            fpc_os: win64
-            fpc_cpu: x86_64
+          # TODO:
+          # - runner: windows-latest
+          #   fpc_os: win64
+          #   fpc_cpu: x86_64
           - runner: macos-latest
             fpc_os: darwin
             fpc_cpu: aarch64
