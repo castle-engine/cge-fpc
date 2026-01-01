@@ -173,8 +173,8 @@ jobs:
         run: |
           cd fpcsrc/
           echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
-          echo "Executing: " make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
-          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OPT="${FPC_OPTS}"
+          # TODO: OVERRIDEVERSIONCHECK=1 should not be needed, we have 3.2.2
+          make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OVERRIDEVERSIONCHECK=1 OPT="${FPC_OPTS}"
 
       # TODO: enable this
       # but it makes CGE pack_release job fail with "out of disk space" -- indeed FPC zips are larger.
