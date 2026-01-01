@@ -66,6 +66,7 @@ jobs:
           # exactly as if from
           # - fpc -iTO / -iSO (target/source OS)
           # - fpc -iTP / -iSP (target/source CPU)
+          # They describe both source and target OS/CPU in our scenario.
           - fpc_os: linux
             fpc_cpu: x86_64
           - runner: windows-latest
@@ -144,7 +145,7 @@ jobs:
           echo "PPC full filename for bootstrap: ${PPC_NAME}"
 
           # check PPC_NAME exists
-          if [ ! -f "${PPC_NAME}"" ]; then
+          if [ ! -f "${PPC_NAME}" ]; then
             echo "Precompiled FPC for bootstrap not found: ${PPC_NAME}"
             exit 1
           fi
