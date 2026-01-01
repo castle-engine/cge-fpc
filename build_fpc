@@ -24,6 +24,18 @@ set -xeuo pipefail
 # Assumes:
 # - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
 #
+# This does almost all of the work of GitHub Actions workflow build.yml .
+# Moving logic from YAML -> bash script makes it easier to:
+#
+# - Write multi-line bash stuff (otherwise you have to deal
+#   with fact that Windows newlines are CRLF while bash (even on Windows)
+#   requires LF, and workarounding it in YAML may involve fun with
+#   https://yaml-multiline.info/ and >- and && ).
+# - Debug on local machine. You can actually just run this script on your
+#   local machine, and it should work equally well interactively.
+# - No need for GHA specific tricks to define
+#   environment variables using $GITHUB_ENV . Less reliance on GHA.
+#
 # Uses bash strict mode
 # http://redsymbol.net/articles/unofficial-bash-strict-mode/
 # ---------------------------------------------------------------------
@@ -137,9 +149,10 @@ fi
 # Our bootstrap ppc reports as 3.2.2.
 
 # main building command
+FPC_INSTALL_PREFIX=`pwd`/fpc
 cd fpcsrc/
 make clean all install \
-  INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc \
+  INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" \
   FPC=${BOOTSTRAP_PPC_NAME} \
   OVERRIDEVERSIONCHECK=1 \
   OPT="${FPC_OPTS}"
@@ -150,12 +163,12 @@ make clean all install \
 # TODO: Even better would be to have some way to auto-download FPC cross-compilers,
 # to not include them in the CGE release.
 # if [ "${FPC_OS}" != "win64" -o "${FPC_CPU}" != "x86_64" ]; then
-#   make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
+#   make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="{FPC_INSTALL_PREFIX}" OPT="${FPC_OPTS}"
 # fi
 
 # TODO: Enable cross-compiler to macOS/Aarch64 from macOS/Intel.
 # if [ "${FPC_OS}" = "darwin" -a "${FPC_CPU}" = "x86_64" ]; then
-#   make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc OPT="${FPC_OPTS}"
+#   make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" OPT="${FPC_OPTS}"
 # fi
 
 # back to main dir, with fpc/ and fpcsrc/ as subdirs
