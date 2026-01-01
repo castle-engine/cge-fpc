@@ -24,6 +24,9 @@ set -xeuo pipefail
 # Assumes:
 # - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
 # - We have tools available, like standard Unix tools and git.
+# - We either have the bootstrap FPC binary in bootstrap-fpc/,
+#   or ppc* binary available in PATH (and with correct version to bootstrap
+#   the best stable FPC version here).
 #
 # This does almost all of the work of GitHub Actions workflow build.yml .
 # Moving logic from YAML -> bash script makes it easier to:
@@ -126,11 +129,18 @@ echo "Bootstrap PPC suffix: ${BOOTSTRAP_PPC_SUFFIX}"
 BOOTSTRAP_PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${FPC_CPU}-${FPC_OS}/${BOOTSTRAP_PPC_SUFFIX}"
 echo "Bootstrap PPC full filename: ${BOOTSTRAP_PPC_NAME}"
 
+# fallback to system-wide ppc* if not found
+if [ ! -f "${BOOTSTRAP_PPC_NAME}" ]; then
+  echo "Falling back to system-wide ${BOOTSTRAP_PPC_SUFFIX} binary."
+  BOOTSTRAP_PPC_NAME=`which ${BOOTSTRAP_PPC_SUFFIX}"`
+  echo "Found system-wide ${BOOTSTRAP_PPC_SUFFIX} binary: ${BOOTSTRAP_PPC_NAME}"
+fi
+
 # check BOOTSTRAP_PPC_NAME exists
 # (later "make ..." call will also check it, but we prefer to check it earlier
 # and show clear error message on fail)
 if [ ! -f "${BOOTSTRAP_PPC_NAME}" ]; then
-  echo "Precompiled FPC for bootstrap not found: ${BOOTSTRAP_PPC_NAME}"
+  echo "FPC binary to bootstrap not found: ${BOOTSTRAP_PPC_NAME}"
   exit 1
 fi
 
@@ -154,9 +164,8 @@ fi
 
 # TODO: Adding OVERRIDEVERSIONCHECK=1 should not be needed.
 # We use FPC 3.2.2 for bootstrap, which follows requirements for
-# reliable bootstrapping.
-# Why does it fail without OVERRIDEVERSIONCHECK=1 ?
-# Our bootstrap ppc reports as 3.2.2.
+# reliable bootstrapping, we even checked it above!
+# So why does below fail without OVERRIDEVERSIONCHECK=1 ?
 
 # main building command
 FPC_INSTALL_PREFIX=`pwd`/fpc

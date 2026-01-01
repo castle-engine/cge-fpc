@@ -126,6 +126,11 @@ jobs:
             sudo apt-get update
             sudo apt-get --no-install-recommends -y install git make zip
 
+            # on 32-bit Raspberry Pi, we rely on system-wide FPC
+            if [ "${{ matrix.arch }}" = "raspberry-pi-32" ]; then
+              sudo apt-get --no-install-recommends -y fpc
+            fi
+
             # run build_fpc
             ./build_fpc ${{ matrix.fpc_os }} ${{ matrix.fpc_cpu }}
 
