@@ -135,7 +135,7 @@ echo "Bootstrap PPC full filename: ${BOOTSTRAP_PPC_NAME}"
 # fallback to system-wide ppc* if not found
 if [ ! -f "${BOOTSTRAP_PPC_NAME}" ]; then
   echo "Falling back to system-wide ${BOOTSTRAP_PPC_SUFFIX} binary."
-  BOOTSTRAP_PPC_NAME=`which ${BOOTSTRAP_PPC_SUFFIX}"`
+  BOOTSTRAP_PPC_NAME="`which \"${BOOTSTRAP_PPC_SUFFIX}\"`"
   if which cygpath > /dev/null; then
     BOOTSTRAP_PPC_NAME="`cygpath --mixed \"${BOOTSTRAP_PPC_NAME}\"`"
   fi
