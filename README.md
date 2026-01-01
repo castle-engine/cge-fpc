@@ -2,41 +2,53 @@
 
 This repository contains our infrastructure to build FPC [Free Pascal Compiler](https://www.freepascal.org/) version that we can easily distribute together with [Castle Game Engine](https://castle-engine.io/download) binary download.
 
-The scripts are organized in [GitHub Actions](https://castle-engine.io/github_actions) workflows inside the `.github` subdirectory.
+This includes:
+
+- bash script in [build_fpc](build_fpc) file.
+- bootstrap FPC binaries, in [bootstrap-fpc/](bootstrap-fpc/) subdirectory.
+- [GitHub Actions](https://castle-engine.io/github_actions) workflow, in [.github/workflows/build.yml](.github/workflows/build.yml) file.
+
+The resulting FPC build is released as [snapshot](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) release.
+
+The FPC version is determined here, as the "best stable FPC version on given platform" (3.2.2 or 3.2.3 now, depending on the platform).
 
 ## Why
 
-- The goal of this is to provide ready working FPC along with the CGE download for people who don't want to use FPC outside of CGE.
+Goal: Provide ready precompiled FPC to later be included ("bundled") with the [CGE download](https://castle-engine.io/download).
 
-    Maybe they are new to Pascal, maybe they are new to FPC, maybe they just _"want something that works with CGE as easily as possible"_ and don't care about having specific FPC version etc.
+For:
 
-    It is important that CGE works as "out of the box" as it can, to be friendly to new users. Part of this is that you can _"just download Castle Game Engine, create new project from template, hit F9 and it builds and runs"_.
+- This "bundled FPC in CGE download" is for people who don't want to use FPC outside of CGE.
 
-- We don't fork FPC here.
+- Maybe they are new to Pascal, maybe they are new to FPC, maybe they just _"want something that works with CGE as easily as possible"_ and don't care about having specific FPC version etc.
 
-    - Because we don't want to have additional maintenance burden of synchronizing it.
+- It is important that CGE works as "out of the box" as it can, to be friendly to new users. Part of this is that you can _"just download Castle Game Engine, create new project from template, hit F9 and it builds and runs"_.
 
-    - Because we always want to allow [using FPC as distributed by FPC team](https://castle-engine.io/supported_compilers.php) and we're proud of it. This repository just provides an option, easy option, for people who don't want/need to manually get FPC from https://www.freepascal.org/ or https://www.lazarus-ide.org/ .
+Note that we don't fork FPC here.
+
+- We merely download upstream FPC sources and build them, following recommended FPC practices (proper bootstrap FPC).
+
+- So we don't have any additional maintenance burden to synchronize FPC sources. Each run of [build_fpc](build_fpc) script just downloads latest FPC sources from https://gitlab.com/freepascal.org/fpc/source .
+
+- This way, we also always allow [using FPC as distributed by FPC team](https://castle-engine.io/supported_compilers.php) with CGE. Using "bundled FPC" with CGE is just an option, an easy option for people who don't want/need to manually get FPC from https://www.freepascal.org/ or https://www.lazarus-ide.org/ . But it's only an option, you can still use any other FPC version you want.
 
 ## How
 
 - We want a binary FPC build, as a simple zip, for major platforms supported by CGE.
 
-- This repository contains [GitHub Actions](https://castle-engine.io/github_actions) workflows (see inside `.github` subdirectory) to build FPC for major CGE supported platforms. For now:
+- This repository contains [GitHub Actions](https://castle-engine.io/github_actions) workflows (see inside `.github` subdirectory) to build FPC for major CGE supported platforms.
 
-    - Windows/x86_64
-    - Linux/x86_64
-    - Linux/Arm (32-bit Raspberry Pi)
-    - Linux/Aarch64 (64-bit Raspberry Pi)
-    - macOS/x86_64
+    See the [snapshot release assets](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) for a list of available OS/CPU combinations.
 
-    The results of the workflows are released as GitHub Releases with `snapshot` tag.
+- FPC is build, installed and packaged to a simple zip. Later, this zip is included in CGE binary download (this is handled during CGE build).
 
-    They will later be placed in CGE binary download.
+- Note: We **don't** use binary downloads from https://sourceforge.net/projects/lazarus/files/ , for various reasons they are not good enough.
 
-- FPC is build, installed and packaged to a simple zip. Later, such bundle is included in CGE binary download.
+    E.g. for Windows they only contain FPC in exe (installer) format. They don't provide zip for Linux.
 
-- Note: We **don't** use binary downloads from https://sourceforge.net/projects/lazarus/files/ , as for Windows they only contain FPC in exe (installer) format and they don't provide zip for Linux. We don't use binary downloads from https://sourceforge.net/projects/freepascal/files/ as for Windows they only provide Win32 installers (and not Win64 that is expected by most users).
+    We also don't use binary downloads from https://sourceforge.net/projects/freepascal/ .They don't provide Win64 compiler (only Win32, unexpected by most users).
+
+    We also need to use FPC 3.2.3 (fixed branch) on some platforms. We can decide about it here, and later CGE build process can just take the version from this repo as "best stable version".
 
     Building FPC ourselves, as a simple zip for all platforms we need, is simplest.
 
