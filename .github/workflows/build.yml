@@ -157,10 +157,6 @@ jobs:
 
           echo "BOOTSTRAP_FPC=FPC=${PPC_NAME}" >> $GITHUB_ENV
 
-          # Note:
-          # Adding OVERRIDEVERSIONCHECK=1 to make command is no longer necessary.
-          # We use FPC 3.2.2 for bootstrap, which follows requirements for
-          # reliable bootstrapping.
 
       - name: Determine FPC options
         if : ${{ matrix.is_macos }}
@@ -173,7 +169,13 @@ jobs:
         run: |
           cd fpcsrc/
           echo "Bootstrap FPC: ${BOOTSTRAP_FPC}"
-          # TODO: OVERRIDEVERSIONCHECK=1 should not be needed, we have 3.2.2
+
+          # TODO: Adding OVERRIDEVERSIONCHECK=1 should not be needed.
+          # We use FPC 3.2.2 for bootstrap, which follows requirements for
+          # reliable bootstrapping.
+          # Why does it fail without OVERRIDEVERSIONCHECK=1 ?
+          # Our bootstrap ppc reports as 3.2.2.
+
           make clean all install INSTALL_PREFIX="${GITHUB_WORKSPACE}"/fpc ${BOOTSTRAP_FPC} OVERRIDEVERSIONCHECK=1 OPT="${FPC_OPTS}"
 
       # TODO: enable this
