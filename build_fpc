@@ -170,7 +170,7 @@ fi
 # main building command
 FPC_INSTALL_PREFIX=`pwd`/fpc
 cd fpcsrc/
-make clean all install \
+make -d clean all install \
   INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" \
   FPC=${BOOTSTRAP_PPC_NAME} \
   OVERRIDEVERSIONCHECK=1 \
