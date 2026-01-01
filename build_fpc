@@ -127,12 +127,18 @@ echo "Bootstrap PPC suffix: ${BOOTSTRAP_PPC_SUFFIX}"
 # - source OS/CPU (from-....) since we must be able to execute it on this system
 # - required bootstrap version
 BOOTSTRAP_PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${FPC_CPU}-${FPC_OS}/${BOOTSTRAP_PPC_SUFFIX}"
+if which cygpath > /dev/null; then
+  BOOTSTRAP_PPC_NAME="`cygpath --mixed \"${BOOTSTRAP_PPC_NAME}\"`"
+fi
 echo "Bootstrap PPC full filename: ${BOOTSTRAP_PPC_NAME}"
 
 # fallback to system-wide ppc* if not found
 if [ ! -f "${BOOTSTRAP_PPC_NAME}" ]; then
   echo "Falling back to system-wide ${BOOTSTRAP_PPC_SUFFIX} binary."
   BOOTSTRAP_PPC_NAME=`which ${BOOTSTRAP_PPC_SUFFIX}"`
+  if which cygpath > /dev/null; then
+    BOOTSTRAP_PPC_NAME="`cygpath --mixed \"${BOOTSTRAP_PPC_NAME}\"`"
+  fi
   echo "Found system-wide ${BOOTSTRAP_PPC_SUFFIX} binary: ${BOOTSTRAP_PPC_NAME}"
 fi
 
@@ -162,6 +168,11 @@ else
   FPC_OPTS=''
 fi
 
+# Disable broken MSys2 paths conversion,
+# it can mess parameters that start with / ,
+# see https://github.com/castle-engine/castle-engine/blob/6caed57cadcdd9ff383df8028e4bb274ca17732b/.github/workflows/test-and-pack-runner-native.yml#L129
+export MSYS2_ENV_CONV_EXCL='*'
+
 # TODO: Adding OVERRIDEVERSIONCHECK=1 should not be needed.
 # We use FPC 3.2.2 for bootstrap, which follows requirements for
 # reliable bootstrapping, we even checked it above!
@@ -169,6 +180,9 @@ fi
 
 # main building command
 FPC_INSTALL_PREFIX=`pwd`/fpc
+if which cygpath > /dev/null; then
+  FPC_INSTALL_PREFIX="`cygpath --mixed \"${FPC_INSTALL_PREFIX}\"`"
+fi
 cd fpcsrc/
 make -d clean all install \
   INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" \
