@@ -135,7 +135,7 @@ jobs:
               exit 1
             ;;
           esac
-          if [ "${{ matrix.fpc_os }}" = "win64" || "${{ matrix.fpc_os }}" = "win32" ]; then
+          if [ "${{ matrix.fpc_os }}" = "win64" -o "${{ matrix.fpc_os }}" = "win32" ]; then
             PPC_SUFFIX="${PPC_SUFFIX}.exe"
           fi
           echo "PPC suffix: ${PPC_SUFFIX}"
