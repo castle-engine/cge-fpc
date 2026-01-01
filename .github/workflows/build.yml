@@ -147,13 +147,15 @@ jobs:
           PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${{ matrix.fpc_cpu }}-${{ matrix.fpc_os }}/${PPC_SUFFIX}"
           echo "PPC full filename for bootstrap: ${PPC_NAME}"
 
+          echo "PPC version is "`${PPC_NAME} -iV`
+
           # check PPC_NAME exists
           if [ ! -f "${PPC_NAME}" ]; then
             echo "Precompiled FPC for bootstrap not found: ${PPC_NAME}"
             exit 1
           fi
 
-          echo "BOOTSTRAP_FPC=FPC=${PPC_NAME}" >> $GITHUB_ENV
+          echo "BOOTSTRAP_FPC=PPC=${PPC_NAME}" >> $GITHUB_ENV
 
           # Note:
           # Adding OVERRIDEVERSIONCHECK=1 to make command is no longer necessary.
