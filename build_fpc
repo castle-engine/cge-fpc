@@ -85,6 +85,10 @@ else
 fi
 
 # cleanup
+# We should have a clean state anyway on GH-hosted runner,
+# and even self-hosted runner after clone,
+# but to enable all scenarios (including interactive testing)
+# do the cleanup.
 rm -Rf fpcsrc/ fpc/ fpc-*.zip
 mkdir -p fpc/
 
@@ -113,7 +117,7 @@ echo "Bootstrap PPC suffix: ${BOOTSTRAP_PPC_SUFFIX}"
 # Prepend to the binary name:
 # - source OS/CPU (from-....) since we must be able to execute it on this system
 # - required bootstrap version
-BOOTSTRAP_PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${{ matrix.fpc_cpu }}-${{ matrix.fpc_os }}/${BOOTSTRAP_PPC_SUFFIX}"
+BOOTSTRAP_PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${FPC_CPU}-${FPC_OS}/${BOOTSTRAP_PPC_SUFFIX}"
 echo "Bootstrap PPC full filename: ${BOOTSTRAP_PPC_NAME}"
 
 # check BOOTSTRAP_PPC_NAME exists
