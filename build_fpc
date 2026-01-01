@@ -66,8 +66,12 @@ else
 fi
 
 # calculate NEEDS_FPC_FIXES_BRANCH
-if [ "${FPC_OS}" = "darwin" ]; then
-  # Use FPC 3.2.3 on macOS, to avoid failures like:
+if [ "${FPC_OS}" = "darwin" -o \
+     '(' "${FPC_OS}" = "linux" -a "${FPC_CPU}" = "aarch64" ')' -o \
+     '(' "${FPC_OS}" = "linux" -a "${FPC_CPU}" = "arm" ')' \
+   ]; then
+
+  # Build FPC 3.2.3 on macOS, to avoid failures like:
   #
   # """
   # Assembling rtti
@@ -80,6 +84,13 @@ if [ "${FPC_OS}" = "darwin" ]; then
   # Fixed in FPC, see
   # https://github.com/LongDirtyAnimAlf/fpcupdeluxe/issues/745
   # https://gitlab.com/freepascal.org/fpc/source/-/commit/e749c81040070d3e8cb0c070e6e63f2f9b54fef4
+
+  # Build FPC 3.2.3 on Linux/Arm or Aarc64 to avoid linking errors:
+  #  (.text+0x54): undefined reference to `__libc_csu_init'
+  # /usr/bin/ld: (.text+0x58): undefined reference to `__libc_csu_init'
+  # /usr/bin/ld: (.text+0x5c): undefined reference to `__libc_csu_fini'
+  # /usr/bin/ld: (.text+0x60): undefined reference to `__libc_csu_fini'
+
   NEEDS_FPC_FIXES_BRANCH=true
 else
   NEEDS_FPC_FIXES_BRANCH=false
