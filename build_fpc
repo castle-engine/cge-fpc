@@ -23,6 +23,7 @@ set -xeuo pipefail
 #
 # Assumes:
 # - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
+# - We have tools available, like standard Unix tools and git.
 #
 # This does almost all of the work of GitHub Actions workflow build.yml .
 # Moving logic from YAML -> bash script makes it easier to:
@@ -38,6 +39,8 @@ set -xeuo pipefail
 #   for when we move away from GitHub.
 # - Easier to run from "ARM Runners" which require special setup in YAML,
 #   but can then reuse this script.
+#
+# Output: fpc-*.zip file.
 #
 # Uses bash strict mode
 # http://redsymbol.net/articles/unofficial-bash-strict-mode/

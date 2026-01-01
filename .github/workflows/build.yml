@@ -120,7 +120,14 @@ jobs:
           image_additional_mb: 6000
           # Avoids the need for copy_artifact_path later.
           bind_mount_repository: true
-          commands: ./build_fpc ${{ matrix.fpc_os }} ${{ matrix.fpc_cpu }}
+          commands: |
+
+            # get dependencies
+            sudo apt-get update
+            sudo apt-get --no-install-recommends -y install git make zip
+
+            # run build_fpc
+            ./build_fpc ${{ matrix.fpc_os }} ${{ matrix.fpc_cpu }}
 
       - name: Release Artifacts
         if: ${{ github.ref == 'refs/heads/master' }}
