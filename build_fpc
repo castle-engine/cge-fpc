@@ -67,6 +67,8 @@ OS=$1
 CPU=$2
 shift 2
 
+source build_utilities
+
 # ---------------------------------------------------------------------
 # bash functions, do_xxx, to be executed in order to perform the script logic.
 
