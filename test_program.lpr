@@ -1,13 +1,16 @@
 { Test program to make sure FPC compiler and standard libraries
   are set up. Uses some standard libraries, makes sure that all link OK. }
-
-uses SysUtils, DOM, XMLRead, FpJson
-  // used by CGE and LCL programs that need threads
-  {$ifdef UNIX} , CThreads {$endif}
-  // make sure using LSOpenCFUrlRef links OK, we had issues with it in the past
-  {$ifdef DARWIN} , MacOSAll {$endif};
+program test_program;
 
 {$mode objfpc}{$H+}
+
+uses
+  // used by CGE and LCL programs that need threads
+  {$ifdef UNIX} CThreads, {$endif}
+  // make sure using LSOpenCFUrlRef links OK, we had issues with it in the past
+  {$ifdef DARWIN} MacOSAll, {$endif}
+  // some standard units to make sure we build them OK
+  SysUtils, DOM, XMLRead, FpJson;
 
 {$ifdef DARWIN}
 function OpenUrl(AUrl: String): Boolean;
