@@ -171,7 +171,7 @@ do_fpc_sources_get ()
   # in "detached HEAD" state.
 
   git clone https://gitlab.com/freepascal.org/fpc/source.git \
-     -c advice.detachedHead=false \
+    -c advice.detachedHead=false \
     --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc
 }
 
