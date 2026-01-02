@@ -94,13 +94,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  build_arm_runner:
-    name: Build on ARM Runner (for Raspberry Pi)
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [raspberry-pi-32, raspberry-pi-64]
-        include:
+  # build_arm_runner:
+  #   name: Build on ARM Runner (for Raspberry Pi)
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       arch: [raspberry-pi-32, raspberry-pi-64]
+  #       include:
 
   #       # additional defines for Raspberry Pi 32-bit (Arm)
   #       - arch: raspberry-pi-32
