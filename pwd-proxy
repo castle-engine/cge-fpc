@@ -1,0 +1,9 @@
+#!/bin/bash
+set -eu
+
+# Calls original-pwd, processed it by cygpath --mixed, returns.
+# See build_fpc for description where do we need this hack.
+
+RESULT="`original-pwd`"
+RESULT="`cygpath --mixed \"${RESULT}\"`"
+echo "${RESULT}"

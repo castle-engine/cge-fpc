@@ -297,16 +297,10 @@ do_fpc_build ()
     # non-MSys2/Cygwin tools got a MSys2/Cygwin path, like
     # "Compiler /d/a/cge-fpc/cge-fpc/fpcsrc/compiler/ppc1.exe not found"
     #
-    # Workaround: Use our own pwd.
+    # Workaround: Use our own pwd that calls original-pwd.exe
+    # and processed output by cygpath --mixed.
     mv -f fpc-build-utils/pwd.exe fpc-build-utils/original-pwd.exe
-    cat <<EOF > fpc-build-utils/pwd
-#!/bin/bash
-set -eu
-RESULT="`original-pwd`"
-RESULT="`cygpath --mixed \"${RESULT}\"`"
-echo "${RESULT}"
-EOF
-    chmod +x fpc-build-utils/pwd
+    cp -f pwd-proxy fpc-build-utils/pwd
 
   else
     echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
