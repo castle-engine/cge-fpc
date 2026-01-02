@@ -246,7 +246,11 @@ if [ "${IS_UNIX}" = "true" ]; then
   # Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
   mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/
 else
-  mv -f fpc/bin/"${FPC_CPU}-${FPC_OS}"/* fpc/bin/
+  # Note to line below:
+  # Do not put extra trailing slash at fpc/bin, as old `mv` from old MSys
+  # distributed with FPC on Windows cannot handle it correctly, fails with
+  # "when moving multiple files, last argument must be a directory".
+  mv -f fpc/bin/"${FPC_CPU}-${FPC_OS}"/* fpc/bin
   # Remove empty unneeded dir
   rm -R fpc/bin/"${FPC_CPU}-${FPC_OS}"/
 fi
