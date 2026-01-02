@@ -16,6 +16,32 @@ While the primary use-case is that people download [Castle Game Engine bundled w
 - directly download the FPC build from [snapshot release](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) and use it.
 - You can also just run `build_fpc` script yourself, to build FPC for your platform. It's a regular bash script and we put effort that it "just works" on all platforms. All you need is a basic set of Unix tools (on Windows, make sure you have MSys2/Cygwin installed).
 
+## Note: You also need fpc.cfg or otherwise pass some command-line options to FPC
+
+The FPC packaged as ZIP here doesn't ship with any configuration file (`fpc.cfg`). You need to create `fpc.cfg` yourself, or otherwise make sure to always pass the appropriate minimal command-line options listed below. You *must* pass these options, at least to let the FPC find its standard units. When using through _Castle Game Engine_, you don't need to worry about it, our [build tool](https://castle-engine.io/build_tool) calculates and passes appropriate options (without storing them in any config file, so you can still move around the CGE+FPC installation directory anywhere you want).
+
+A minimal FPC configuration file (you would place this in file like `fpc.cfg` alongside `fpc.exe` on Windows, or in `$HOME/.fpc.cfg` on Unix) should contain this:
+
+```
+# Point to FPC standard units.
+# Note that FPC will replace the $FPCTARGET itself.
+# You only need to replace the <directory-....> part with correct (absolute,
+# so it works everywhere) path.
+-Fu<directory-where-you-extracted-FPC-ZIP>/fpc/units/$FPCTARGET/*
+
+#ifdef DARWIN
+# MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard for FPC, directory
+# Note that it requires having Xcode command-line tools installed,
+# you can check the base path with `xcode-select--print-path`.
+-XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+-Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
+-FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+#endif
+```
+
+Our `build_fpc` script really auto-tests that these options are enough to build programs, so we are sure of them.
+
+
 ## Why
 
 Goal: Provide ready precompiled FPC to later be included ("bundled") with the [CGE download](https://castle-engine.io/download).
