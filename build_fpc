@@ -262,7 +262,10 @@ do_fpc_build ()
   # main building command
   local FPC_INSTALL_PREFIX="${WORKSPACE_ROOT}/fpc"
 
-  if [ "${IS_WINDOWS}" = "true" -a -f 'C:/Program Files/Git/usr/bin/pwd.exe' ]; then
+  if [ "${IS_WINDOWS}" = "true" ]; then
+    export PATH="${WORKSPACE_ROOT_UNIX}/fpc-windows-utilities/:$PATH"
+
+    # -a -f 'C:/Program Files/Git/usr/bin/pwd.exe'
 
     # Makefile inside FPC has problems when `pwd.exe` is present in a directory
     # with space in path.
@@ -276,31 +279,31 @@ do_fpc_build ()
     #
     # Workaround: Copy to fpc-build-utils/ (no space in path).
 
-    echo 'Workaround for GH-hosted Windows machine with space in path to pwd.exe'
-    mkdir -p fpc-build-utils/
-    cp -f 'C:/Program Files/Git/usr/bin/'*.exe fpc-build-utils/
-    ls -Flah fpc-build-utils/
-    # Note that we need to append here PATH using WORKSPACE_ROOT_UNIX,
-    # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
-    # (not drive letter separator).
-    export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build-utils/:$PATH"
+    # echo 'Workaround for GH-hosted Windows machine with space in path to pwd.exe'
+    # mkdir -p fpc-build-utils/
+    # cp -f 'C:/Program Files/Git/usr/bin/'*.exe fpc-build-utils/
+    # ls -Flah fpc-build-utils/
+    # # Note that we need to append here PATH using WORKSPACE_ROOT_UNIX,
+    # # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
+    # # (not drive letter separator).
+    # export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build-utils/:$PATH"
 
-    # Makefile inside FPC has problems if `pwd` answers with MSys path (with /),
-    # like /c/... .
-    # It needs to convert it to native path (understood by non-Msys2/Cygwin tools),
-    # but it has only a weird hardcoded logic for "/cygdrive..." prefix,
-    # which works on Cygwin but not MSys2.
-    # They could have used "cygpath --mixed ..." which would be equally reliable
-    # on Cygwin and MSys2, but didn't...
-    #
-    # Symptom: "make ..." fails with error where it's evident that
-    # non-MSys2/Cygwin tools got a MSys2/Cygwin path, like
-    # "Compiler /d/a/cge-fpc/cge-fpc/fpcsrc/compiler/ppc1.exe not found"
-    #
-    # Workaround: Use our own pwd that calls original-pwd.exe
-    # and processed output by cygpath --mixed.
-    mv -f fpc-build-utils/pwd.exe fpc-build-utils/original-pwd.exe
-    cp -f pwd-proxy fpc-build-utils/pwd
+    # # Makefile inside FPC has problems if `pwd` answers with MSys path (with /),
+    # # like /c/... .
+    # # It needs to convert it to native path (understood by non-Msys2/Cygwin tools),
+    # # but it has only a weird hardcoded logic for "/cygdrive..." prefix,
+    # # which works on Cygwin but not MSys2.
+    # # They could have used "cygpath --mixed ..." which would be equally reliable
+    # # on Cygwin and MSys2, but didn't...
+    # #
+    # # Symptom: "make ..." fails with error where it's evident that
+    # # non-MSys2/Cygwin tools got a MSys2/Cygwin path, like
+    # # "Compiler /d/a/cge-fpc/cge-fpc/fpcsrc/compiler/ppc1.exe not found"
+    # #
+    # # Workaround: Use our own pwd that calls original-pwd.exe
+    # # and processed output by cygpath --mixed.
+    # mv -f fpc-build-utils/pwd.exe fpc-build-utils/original-pwd.exe
+    # cp -f pwd-proxy fpc-build-utils/pwd
 
   else
     echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
