@@ -160,6 +160,7 @@ jobs:
     env:
       release_tag: snapshot
     steps:
+    - uses: actions/checkout@v6
     - name: Update Release Tag
       if: ${{ github.ref == 'refs/heads/master' }}
       run: |
