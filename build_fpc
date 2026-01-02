@@ -332,7 +332,6 @@ do_fpc_build ()
   make clean all install \
     INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" \
     FPC=${BOOTSTRAP_PPC_NAME} \
-    OVERRIDEVERSIONCHECK=1 \
     OPT="${FPC_OPTS}"
 
   if [ "${IS_WINDOWS}" = "true" ]; then
