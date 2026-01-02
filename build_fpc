@@ -425,8 +425,14 @@ do_test_program ()
     "-Fufpc/units/${FPC_CPU}-${FPC_OS}/*" \
     test_program.lpr
 
-  if [ `test_program` != "Hello World!" ]; then
-    echo "Test program failed to execute correctly."
+  local TEST_PROGRAM_OUTPUT="`./test_program`"
+  if [ "$IS_WINDOWS" = 'true' ]; then
+    # remove \r at the end, following https://superuser.com/questions/489180/remove-r-from-echoing-out-in-bash-script
+    TEST_PROGRAM_OUTPUT="${TEST_PROGRAM_OUTPUT%%[[:cntrl:]]}"
+  fi
+
+  if [ "${TEST_PROGRAM_OUTPUT}" != "Hello World!" ]; then
+    echo "Test program failed to execute correctly. Output: $TEST_PROGRAM_OUTPUT"
     exit 1
   fi
 }
