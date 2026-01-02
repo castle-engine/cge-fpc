@@ -306,17 +306,16 @@ do_fpc_build ()
     echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
   fi
 
-  echo '1111'
-  which pwd
-
-  echo '2222'
+  echo 'Test pwd'
+  echo "pwd:" `pwd`
+  echo "which pwd:" `which pwd`
+  cygpath --mixed `pwd`
   cygpath --mixed `which pwd`
 
-  echo '3333'
+  echo 'Testing Makefile.test'
   make -f Makefile.test test
 
-  echo '4444'
-
+  echo 'Building FPC'
   cd fpcsrc/
   make clean all install \
     INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" \
