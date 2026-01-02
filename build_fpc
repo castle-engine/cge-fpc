@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -xeuo pipefail
 
 # ---------------------------------------------------------------------
 # Build "best stable" FPC version from sources.
@@ -258,9 +258,13 @@ do_fpc_build ()
   local FPC_INSTALL_PREFIX="${WORKSPACE_ROOT}/fpc"
 
   if [ "${IS_WINDOWS}" = "true" -a -f 'C:/Program Files/Git/usr/bin/pwd.exe' ]; then
+    echo 'Workaround for GH-hosted Windows machine with space in path to pwd.exe'
     mkdir -p fpc-build-utils/
     cp -f 'C:/Program Files/Git/usr/bin/'*.exe fpc-build-utils/
+    ls -Flah fpc-build-utils/
     export PATH="${WORKSPACE_ROOT}/fpc-build-utils/:$PATH"
+  else
+    echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
   fi
 
   echo '1111'
