@@ -87,7 +87,7 @@ jobs:
       # Additionally, when on Win64, build and release also Win32 FPC.
       - name: Build FPC (for Win32)
         if: ${{ matrix.fpc_os == 'win64' && matrix.fpc_cpu == 'x86_64' }}
-        run: ./build_fpc ${{ matrix.fpc_os }} ${{ matrix.fpc_cpu }}
+        run: ./build_fpc win32 i386
       - name: Release Artifacts (for Win32)
         if: ${{ matrix.fpc_os == 'win64' && matrix.fpc_cpu == 'x86_64' && github.ref == 'refs/heads/master' }}
         run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber fpc-*.zip
