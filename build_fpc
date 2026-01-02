@@ -306,8 +306,11 @@ do_fpc_build ()
     echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
   fi
 
+  PWD="`which pwd`"
+
   echo 'Test pwd'
   echo "pwd:" `pwd`
+  echo "PWD (no builtin):" `"${PWD}"`
   echo "which pwd:" `which pwd`
   cygpath --mixed `pwd`
   cygpath --mixed `which pwd`
