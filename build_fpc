@@ -18,13 +18,25 @@ set -euo pipefail
 #   in contrast to some other conventions that may use "windows" or "win32"
 #   for both 32-bit and 64-bit Windows).
 #
-# Right now they determine both source and target OS/CPU for the main compiler
-# we build. On some platforms, we may add cross-compilers.
+#   They determine both source and target OS/CPU for the main compiler
+#   we build. We build every compiler on its target platform, so source and target
+#   are the same. This is also good for testing -- we can immediately execute
+#   the compiler we build (see do_test).
+#   ( Note that we can still build cross-compilers, this is unrelated. )
+#
+#   The given OS and CPU must correspond to the current platform,
+#   since they describe both source (this) and target.
+#   This means that usually you don't really have a choice in what
+#   OS / CPU you provide: you must pass the one of the current system
+#   (and we could also auto-detect it, in fact). But in some cases,
+#   if platform can execute binaries with various architectures, you have
+#   a choice. E.g. on Windows, you can pass either "win64 x86_64" or
+#   "win32 i386" since it can execute (and build) FPC for either win32 or win64.
 #
 # Assumes:
 # - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
 # - We have tools available, like standard Unix tools and git.
-#   On Windows, be sure to have MSys2 or Cygwin.
+#   On Windows, be sure to have MSys2 (already OK on GH-hosted runners) or Cygwin.
 # - We either have the bootstrap FPC binary in bootstrap-fpc/,
 #   or ppc* binary available in PATH (and with correct version to bootstrap
 #   the best stable FPC version here).
