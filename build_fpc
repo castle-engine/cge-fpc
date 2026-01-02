@@ -256,7 +256,16 @@ do_fpc_build ()
     FPC_INSTALL_PREFIX="`cygpath --mixed \"${FPC_INSTALL_PREFIX}\"`"
   fi
 
+  echo '1111'
+  which pwd
+
+  echo '2222'
+  cygpath --mixed `which pwd`
+
+  echo '3333'
   make -f Makefile.test test
+
+  echo '4444'
 
   cd fpcsrc/
   make clean all install \
