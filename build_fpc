@@ -24,6 +24,22 @@ set -xeuo pipefail
 # Assumes:
 # - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
 # - We have tools available, like standard Unix tools and git.
+#
+#   On Windows, be sure to have MSys2 or Cygwin.
+#
+#   Note that FPC's Makefile assumes `pwd` returns Windows-native path,
+#   not Cygwin path naturally (which FPC binary cannot understand),
+#   so if you are on Cygwin you may need to force using FPC's tools like pwd
+#   (which come from MSys), not Cygwin's, by having a preexisting FPC install
+#   and putting them first on PATH:
+#
+#     export PATH=$HOME/installed/fpclazarus/stable/fpc/bin/x86_64-win64:$PATH
+#     ./build_fpc win64 x86_64
+#
+#   Failing to do it may result in "make ..." error, and FPC saying it cannot
+#   find unit system used by pp. You will see it is passing -Fu/cygwin/path
+#   to ppc*, and thus it's a Cygwin path.
+#
 # - We either have the bootstrap FPC binary in bootstrap-fpc/,
 #   or ppc* binary available in PATH (and with correct version to bootstrap
 #   the best stable FPC version here).
@@ -230,9 +246,9 @@ if [ "${IS_UNIX}" = "true" ]; then
   # Put units/ as subdirectory of main fpc/ -- this makes it simpler to refer to, and consistent with Windows layout
   mv -f fpc/lib/fpc/"${FPC_VERSION}"/units fpc/
 else
-  mv -f fpc/bin/x86_64-win64/* fpc/bin/
+  mv -f fpc/bin/"${FPC_CPU}-${FPC_OS}"/* fpc/bin/
   # Remove empty unneeded dir
-  rm -R fpc/bin/x86_64-win64/
+  rm -R fpc/bin/"${FPC_CPU}-${FPC_OS}"/
 fi
 
 # Copy sources to fpc/src
