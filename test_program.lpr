@@ -4,45 +4,44 @@ program test_program;
 
 {$mode objfpc}{$H+}
 
+// Needed to compile OpenURL, to pass NSString around
+{$ifdef DARWIN}
+  {$modeswitch objectivec1}
+{$endif}
+
 uses
   // used by CGE and LCL programs that need threads
   {$ifdef UNIX} CThreads, {$endif}
-  // make sure using LSOpenCFUrlRef links OK, we had issues with it in the past
-  {$ifdef DARWIN} MacOSAll, {$endif}
+  // for things needed by OpenURL
+  {$ifdef DARWIN} MacOSAll, CocoaAll, {$endif}
   // some standard units to make sure we build them OK
   SysUtils, DOM, XMLRead, FpJson;
 
 {$ifdef DARWIN}
-function OpenUrl(AUrl: String): Boolean;
+
+// Code from Lazarus LCL lcl/include/sysenvapis_mac.inc .
+// See
+//   https://gitlab.com/freepascal.org/lazarus/lazarus/-/issues/26890
+//   https://gitlab.com/freepascal.org/lazarus/lazarus/-/commit/bde2979aa0fa407e116925dbbadfa53536ab4613
+// Open a given URL with the default browser
+function OpenURL(AURL: String): Boolean;
 var
-  cf: CFStringRef;
-  url: CFUrlRef;
-  FileName: string;
+  url: NSURL;
+  ws: NSWorkspace;
 begin
-  if AUrl = '' then
-    Exit(False);
+  Result := False;
+  if AURL = '' then
+    Exit;
+  url := NSURL.URLWithString(NSString.stringWithUTF8String(@AURL[1]));
+  // scheme is checking for "protocol" specifier.
+  // if no protocol specifier exist - do not consider it as URL and fail
+  if not Assigned(url) or (url.scheme.length = 0) then
+    Exit;
 
-  cf := CFStringCreateWithCString(kCFAllocatorDefault, @AUrl[1], kCFStringEncodingUTF8);
-  if not Assigned(cf) then
-    Exit(False);
-  url := CFUrlCreateWithString(nil, cf, nil);
-
-  {$ifdef CPUaarch64}
-  { TODO: cannot link with LSOpenCFUrlRef on macOS/Aarch64
-
-    Undefined symbols for architecture arm64:
-      "_LSOpenCFURLRef", referenced from:
-    test_program.lpr(37,25) Error: Error while linking
-          _P$TEST_PROGRAM_$$_OPENURL$ANSISTRING$$BOOLEAN in test_program.o
-  }
-  Result := false;
-  {$else}
-  Result := LSOpenCFUrlRef(url, nil) = 0;
-  {$endif}
-
-  CFRelease(url);
-  CFRelease(cf);
+  ws := NSWorkspace.sharedWorkspace;
+  Result := ws.openURL(url);
 end;
+
 {$endif}
 
 begin
