@@ -2,3 +2,9 @@
 /fpc/
 /fpcsrc/
 /fpc-*.zip
+
+# test_program outputs
+/test_program
+/test_program.exe
+/test_program.ppu
+/test_program.o

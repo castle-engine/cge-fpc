@@ -382,6 +382,55 @@ do_pack_zip ()
   fi
 }
 
+# Test that build FPC (in fpc/ , which we assume we can just execute)
+# returns correct version and OS/CPU.
+do_test_version_os_cpu ()
+{
+  local ACTUAL_FPC_VERSION="`fpc/bin/fpc -iV`"
+  if [ "$IS_WINDOWS" = 'true' ]; then
+    # remove \r at the end, following https://superuser.com/questions/489180/remove-r-from-echoing-out-in-bash-script
+    ACTUAL_FPC_VERSION="${ACTUAL_FPC_VERSION%%[[:cntrl:]]}"
+  fi
+  if [ "$ACTUAL_FPC_VERSION" != "$FPC_VERSION" ]; then
+    echo "FPC version is $ACTUAL_FPC_VERSION, expected $FPC_VERSION"
+    exit 1
+  fi
+
+  local ACTUAL_FPC_OS="`fpc/bin/fpc -iTO`"
+  if [ "$IS_WINDOWS" = 'true' ]; then
+    # remove \r at the end, following https://superuser.com/questions/489180/remove-r-from-echoing-out-in-bash-script
+    ACTUAL_FPC_OS="${ACTUAL_FPC_OS%%[[:cntrl:]]}"
+  fi
+  if [ "$ACTUAL_FPC_OS" != "$FPC_OS" ]; then
+    echo "FPC OS is $ACTUAL_FPC_OS, expected $FPC_OS"
+    exit 1
+  fi
+
+  local ACTUAL_FPC_CPU="`fpc/bin/fpc -iTP`"
+  if [ "$IS_WINDOWS" = 'true' ]; then
+    # remove \r at the end, following https://superuser.com/questions/489180/remove-r-from-echoing-out-in-bash-script
+    ACTUAL_FPC_CPU="${ACTUAL_FPC_CPU%%[[:cntrl:]]}"
+  fi
+  if [ "$ACTUAL_FPC_CPU" != "$FPC_CPU" ]; then
+    echo "FPC CPU is $ACTUAL_FPC_CPU, expected $FPC_CPU"
+    exit 1
+  fi
+}
+
+# Test that build FPC (in fpc/ , which we assume we can just execute)
+# can compile a simple program.
+do_test_program ()
+{
+  fpc/bin/fpc \
+    "-Fufpc/units/${FPC_CPU}-${FPC_OS}/*" \
+    test_program.lpr
+
+  if [ `test_program` != "Hello World!" ]; then
+    echo "Test program failed to execute correctly."
+    exit 1
+  fi
+}
+
 # ---------------------------------------------------------------------
 # main: execute bash functions in order
 
@@ -393,3 +442,5 @@ do_fpc_build
 do_fix_layout
 do_copy_sources
 do_pack_zip
+do_test_version_os_cpu
+do_test_program
