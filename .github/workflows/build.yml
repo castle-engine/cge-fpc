@@ -84,13 +84,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-  # build_arm_runner:
-  #   name: Build on ARM Runner (for Raspberry Pi)
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       arch: [raspberry-pi-32, raspberry-pi-64]
-  #       include:
+      # Additionally, when on Win64, build and release also Win32 FPC.
+      - name: Build FPC (for Win32)
+        if: ${{ matrix.fpc_os == 'win64' && matrix.fpc_cpu == 'x86_64' }}
+        run: ./build_fpc ${{ matrix.fpc_os }} ${{ matrix.fpc_cpu }}
+      - name: Release Artifacts (for Win32)
+        if: ${{ matrix.fpc_os == 'win64' && matrix.fpc_cpu == 'x86_64' && github.ref == 'refs/heads/master' }}
+        run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber fpc-*.zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  build_arm_runner:
+    name: Build on ARM Runner (for Raspberry Pi)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [raspberry-pi-32, raspberry-pi-64]
+        include:
 
   #       # additional defines for Raspberry Pi 32-bit (Arm)
   #       - arch: raspberry-pi-32
