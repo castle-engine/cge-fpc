@@ -156,9 +156,10 @@ do_cleanup ()
 {
   # Note: We should have a clean state anyway on GH-hosted runner,
   # and even self-hosted runner after clone,
-  # but to enable all scenarios (including interactive testing)
+  # but to enable all scenarios (including interactive testing,
+  # and building win32 after win64 in same GHA job)
   # do the cleanup.
-  rm -Rf fpcsrc/ fpc/ fpc-*.zip
+  rm -Rf fpcsrc/ fpc/ fpc-*.zip fpc-build-resources/
   mkdir -p fpc/
 }
 
@@ -297,11 +298,11 @@ do_fpc_build ()
     #
     #    Symptom: "make ..." fails with "You need the GNU utils package to use this Makefile".
     #
-    #    Solution is to use our ${WORKSPACE_ROOT_UNIX}/fpc-build/install/binwXX .
+    #    Solution is to use our ${WORKSPACE_ROOT_UNIX}/fpc-build-resources/install/binwXX .
 
     git clone https://gitlab.com/freepascal.org/fpc/build.git \
       -c advice.detachedHead=false \
-      --depth 1 --single-branch --branch main fpc-build
+      --depth 1 --single-branch --branch main fpc-build-resources
 
     # check the layout of fpc build repo on
     # https://gitlab.com/freepascal.org/fpc/build/-/tree/main/install?ref_type=heads
@@ -324,7 +325,7 @@ do_fpc_build ()
     # Note that we need to append here to PATH using WORKSPACE_ROOT_UNIX,
     # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
     # (not drive letter separator).
-    export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build/install/${FPC_BUILD_OS_SUBDIR}/:$PATH"
+    export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build-resources/install/${FPC_BUILD_OS_SUBDIR}/:$PATH"
   fi
 
   cd fpcsrc/

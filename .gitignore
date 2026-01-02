@@ -2,6 +2,7 @@
 /fpc/
 /fpcsrc/
 /fpc-*.zip
+/fpc-build-resources
 
 # test_program outputs
 /test_program
