@@ -12,6 +12,10 @@ The resulting FPC build is released as [snapshot](https://github.com/castle-engi
 
 The FPC version is determined here, as the "best stable FPC version on given platform" (3.2.2 or 3.2.3 now, depending on the platform).
 
+While the primary use-case is that people download [Castle Game Engine bundled with FPC](https://castle-engine.io/download) and use it, you can also
+- directly download the FPC build from [snapshot release](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) and use it.
+- You can also just run `build_fpc` script yourself, to build FPC for your platform. It's a regular bash script and we put effort that it "just works" on all platforms. All you need is a basic set of Unix tools (on Windows, make sure you have MSys2/Cygwin installed).
+
 ## Why
 
 Goal: Provide ready precompiled FPC to later be included ("bundled") with the [CGE download](https://castle-engine.io/download).
