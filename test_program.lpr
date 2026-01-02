@@ -7,6 +7,8 @@ uses SysUtils, DOM, XMLRead, FpJson
   // make sure using LSOpenCFUrlRef links OK, we had issues with it in the past
   {$ifdef DARWIN} , MacOSAll {$endif};
 
+{$mode objfpc}{$H+}
+
 {$ifdef DARWIN}
 function OpenUrl(AUrl: String): Boolean;
 var
