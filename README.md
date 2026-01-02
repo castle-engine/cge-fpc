@@ -1,19 +1,37 @@
-# FPC (Free Pascal Compiler) version that is easy to distribute together with CGE
+# FPC (Free Pascal Compiler) builds (for Castle Game Engine and other usage)
 
-This repository contains our infrastructure to build FPC [Free Pascal Compiler](https://www.freepascal.org/) version that we can easily distribute together with [Castle Game Engine](https://castle-engine.io/download) binary download.
+Build FPC [Free Pascal Compiler](https://www.freepascal.org/) so that we can easily distribute it together with [Castle Game Engine downloads](https://castle-engine.io/download).
 
-This includes:
+This repo includes:
 
-- bash script in [build_fpc](build_fpc) file.
+- bash script in [build_fpc](build_fpc) file (plus common utilities in [build_utilities](build_utilities) file) to build FPC.
+
 - bootstrap FPC binaries, in [bootstrap-fpc/](bootstrap-fpc/) subdirectory.
-- [GitHub Actions](https://castle-engine.io/github_actions) workflow, in [.github/workflows/build.yml](.github/workflows/build.yml) file.
 
-The resulting FPC build is released as [snapshot](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) release.
+- [GitHub Actions](https://castle-engine.io/github_actions) workflow, in [.github/workflows/build.yml](.github/workflows/build.yml) file, that uses above.
 
-The FPC version is determined here, as the "best stable FPC version on given platform" (3.2.2 or 3.2.3 now, depending on the platform).
+Features:
+
+- As much as possible is within the bash script logic and you can just run `build_fpc` on your machine to test it works. So it's not only for CI/CD.
+
+- The resulting FPC is of "best stable" version (3.2.2 or 3.2.3 now, depending on the platform).
+
+- The resulting FPC is a trivial ZIP, for all platforms, easy to unpack and repack into a larger installer.
+
+- The resulting FPC build is released as [snapshot](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) release. Scripts (from other CI/CD workflows) can download this FPC trivially too, just
+
+    ```
+    wget https://github.com/castle-engine/cge-fpc/releases/download/snapshot/fpc-"${OS}"-"${CPU}".zip
+    ```
+
+- When using this FPC, be sure to specify proper options. See section _"You also need fpc.cfg or otherwise pass some command-line options to FPC"_ below and see repo [cge-lazarus](https://github.com/castle-engine/cge-lazarus) for example usage.
+
+- Auto-tested. We actually execute the build compiler on [test_program.lpr](test_program.lpr) to make sure it works.
 
 While the primary use-case is that people download [Castle Game Engine bundled with FPC](https://castle-engine.io/download) and use it, you can also
+
 - directly download the FPC build from [snapshot release](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) and use it.
+
 - You can also just run `build_fpc` script yourself, to build FPC for your platform. It's a regular bash script and we put effort that it "just works" on all platforms. All you need is a basic set of Unix tools (on Windows, make sure you have MSys2/Cygwin installed).
 
 ## Note: You also need fpc.cfg or otherwise pass some command-line options to FPC
