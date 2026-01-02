@@ -259,7 +259,7 @@ do_fpc_build ()
 
   if [ "${IS_WINDOWS}" = "true" -a -f 'C:/Program Files/Git/usr/bin/pwd.exe' ]; then
     mkdir -p fpc-build-utils/
-    cp -f 'C:/Program Files/Git/usr/bin/*.exe' fpc-build-utils/
+    cp -f 'C:/Program Files/Git/usr/bin/'*.exe fpc-build-utils/
     export PATH="${WORKSPACE_ROOT}/fpc-build-utils/:$PATH"
   fi
 
