@@ -235,9 +235,10 @@ do_calculate_bootstrap_ppc ()
   fi
 }
 
-do_fpc_build ()
+# calculate $FPC_OPTS which are used both for FPC building, and later to build
+# test_program.lpr .
+do_calculate_fpc_opts ()
 {
-  local FPC_OPTS
   if [ "${FPC_OS}" = "darwin" ]; then
     # Following FpcUpDeluxe:
     # MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard directory
@@ -245,7 +246,10 @@ do_fpc_build ()
   else
     FPC_OPTS=''
   fi
+}
 
+do_fpc_build ()
+{
   # Disable broken MSys2 paths conversion,
   # it can mess parameters that start with / ,
   # see https://github.com/castle-engine/castle-engine/blob/6caed57cadcdd9ff383df8028e4bb274ca17732b/.github/workflows/test-and-pack-runner-native.yml#L129
@@ -439,6 +443,7 @@ do_test_program ()
 {
   fpc/bin/fpc \
     "-Fufpc/units/${FPC_CPU}-${FPC_OS}/*" \
+    ${FPC_OPTS} \
     test_program.lpr
 
   local TEST_PROGRAM_OUTPUT="`./test_program`"
@@ -460,6 +465,7 @@ do_setup_environment
 do_cleanup
 do_fpc_sources_get
 do_calculate_bootstrap_ppc
+do_calculate_fpc_opts
 do_fpc_build
 do_fix_layout
 do_copy_sources
