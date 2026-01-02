@@ -76,8 +76,12 @@ shift 2
 # Determine variables used through the rest of the script.
 do_setup_environment ()
 {
-  # calculate WORKSPACE_ROOT, in native (on Windows) path format
-  WORKSPACE_ROOT=`pwd`
+  # calculate WORKSPACE_ROOT and WORKSPACE_ROOT_UNIX.
+  # On Windows they differ:
+  # - WORKSPACE_ROOT_UNIX is in Cygwin path format (with /, without :, more suitable for $PATH)
+  # - WORKSPACE_ROOT is in native (on Windows) path format, understood also by non-Msys2/Cygwin tools
+  WORKSPACE_ROOT_UNIX="`pwd`"
+  WORKSPACE_ROOT="${WORKSPACE_ROOT_UNIX}"
   if which cygpath > /dev/null; then
     WORKSPACE_ROOT="`cygpath --mixed \"${WORKSPACE_ROOT}\"`"
   fi
@@ -137,6 +141,7 @@ do_setup_environment ()
   echo "  FPC_ZIP_NAME (we will make this file): ${FPC_ZIP_NAME}"
   echo "  IS_UNIX: ${IS_UNIX}"
   echo "  IS_WINDOWS: ${IS_WINDOWS}"
+  echo "  WORKSPACE_ROOT_UNIX: ${WORKSPACE_ROOT_UNIX}"
   echo "  WORKSPACE_ROOT: ${WORKSPACE_ROOT}"
   echo
   echo "  OS and CPU (source and target):"
@@ -262,7 +267,10 @@ do_fpc_build ()
     mkdir -p fpc-build-utils/
     cp -f 'C:/Program Files/Git/usr/bin/'*.exe fpc-build-utils/
     ls -Flah fpc-build-utils/
-    export PATH="${WORKSPACE_ROOT}/fpc-build-utils/:$PATH"
+    # Note that we need to append here PATH using WORKSPACE_ROOT_UNIX,
+    # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
+    # (not drive letter separator).
+    export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build-utils/:$PATH"
   else
     echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
   fi
