@@ -24,22 +24,7 @@ set -xeuo pipefail
 # Assumes:
 # - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
 # - We have tools available, like standard Unix tools and git.
-#
 #   On Windows, be sure to have MSys2 or Cygwin.
-#
-#   Note that FPC's Makefile assumes `pwd` returns Windows-native path,
-#   not Cygwin path naturally (which FPC binary cannot understand),
-#   so if you are on Cygwin you may need to force using FPC's tools like pwd
-#   (which come from MSys), not Cygwin's, by having a preexisting FPC install
-#   and putting them first on PATH:
-#
-#     export PATH=$HOME/installed/fpclazarus/stable/fpc/bin/x86_64-win64:$PATH
-#     ./build_fpc win64 x86_64
-#
-#   Failing to do it may result in "make ..." error, and FPC saying it cannot
-#   find unit system used by pp. You will see it is passing -Fu/cygwin/path
-#   to ppc*, and thus it's a Cygwin path.
-#
 # - We either have the bootstrap FPC binary in bootstrap-fpc/,
 #   or ppc* binary available in PATH (and with correct version to bootstrap
 #   the best stable FPC version here).
@@ -263,71 +248,63 @@ do_fpc_build ()
   local FPC_INSTALL_PREFIX="${WORKSPACE_ROOT}/fpc"
 
   if [ "${IS_WINDOWS}" = "true" ]; then
+    # Makefile inside FPC has a few problems on Windows.
+    #
+    # Summary:
+    # It's easiest to just avoid them by using utilities (like pwd.exe)
+    # distributed by FPC (here we just reuse them from FPC 3.2.2 installation)
+    # and relying they are placed in a directory without spaces (which is true
+    # at least on GH-hosted Windows runners).
+    # That's what we now do.
+    #
+    # Past problems and attempts:
+    #
+    # 1. At times, FPC Makefile wants native path (not MSys2/Cygwin path).
+    #    This is understandable, but then they try to obtain it by looking for
+    #    /cygdrive prefix and search+replace in Makefile, instead of using more
+    #    reliable "cygpath --mixed ..." to convert paths. The latter would work
+    #    on both MSys2 and Cygwin, and would work for all paths, e.g. /home/...
+    #    (which doesn't start with /cygdrive but is still a Cygwin path).
+    #
+    #    Failing to solve it may result in "make ..." error, and FPC saying it cannot
+    #    find unit system used by pp. You will see it is passing -Fu/cygwin/path
+    #    to ppc*, and thus it's a Cygwin path.
+    #
+    # 2. Makefile inside FPC has problems when `pwd.exe` is present in a directory
+    #    with space in path.
+    #    The Makefile does PWD:=$(strip $(wildcard $(addsuffix /pwd,$(SEARCHPATH))))
+    #    and will fail to find PWD when there is space in path.
+    #    And this is the case on GH-hosted Windows runner, where pwd.exe
+    #    is inside "C:/Program Files/Git/usr/bin/".
+    #
+    #    They could have used "which pwd", which would be more reliable, but didn't...
+    #
+    #    Symptom: "make ..." fails with "You need the GNU utils package to use this Makefile".
+    #
+    #    Solution is to use our ${WORKSPACE_ROOT_UNIX}/fpc-windows-utilities/ .
+
+    # Restore $PATH later, as the FPC utilities are weirdly old.
+    # E.g. `mv.exe` is some archaic version that doesn't tolerate last
+    # parameter having final slash (would fail at "mv ... fpc/bin/",
+    # while the standard "mv" from both MSys2 (in GHA) and Cygwin can handle it).
+    local RESTORE_PATH="$PATH"
+
+    # Note that we need to append here to PATH using WORKSPACE_ROOT_UNIX,
+    # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
+    # (not drive letter separator).
     export PATH="${WORKSPACE_ROOT_UNIX}/fpc-windows-utilities/:$PATH"
-
-    # -a -f 'C:/Program Files/Git/usr/bin/pwd.exe'
-
-    # Makefile inside FPC has problems when `pwd.exe` is present in a directory
-    # with space in path.
-    # The Makefile does PWD:=$(strip $(wildcard $(addsuffix /pwd,$(SEARCHPATH))))
-    # and will fail to find PWD when there is space in path.
-    # And this is the case on GH-hosted Windows runner, where pwd.exe
-    # is inside "C:/Program Files/Git/usr/bin/".
-    # They could have used "which pwd", which would be more reliable, but didn't...
-    #
-    # Symptom: "make ..." fails with "You need the GNU utils package to use this Makefile".
-    #
-    # Workaround: Copy to fpc-build-utils/ (no space in path).
-
-    # echo 'Workaround for GH-hosted Windows machine with space in path to pwd.exe'
-    # mkdir -p fpc-build-utils/
-    # cp -f 'C:/Program Files/Git/usr/bin/'*.exe fpc-build-utils/
-    # ls -Flah fpc-build-utils/
-    # # Note that we need to append here PATH using WORKSPACE_ROOT_UNIX,
-    # # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
-    # # (not drive letter separator).
-    # export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build-utils/:$PATH"
-
-    # # Makefile inside FPC has problems if `pwd` answers with MSys path (with /),
-    # # like /c/... .
-    # # It needs to convert it to native path (understood by non-Msys2/Cygwin tools),
-    # # but it has only a weird hardcoded logic for "/cygdrive..." prefix,
-    # # which works on Cygwin but not MSys2.
-    # # They could have used "cygpath --mixed ..." which would be equally reliable
-    # # on Cygwin and MSys2, but didn't...
-    # #
-    # # Symptom: "make ..." fails with error where it's evident that
-    # # non-MSys2/Cygwin tools got a MSys2/Cygwin path, like
-    # # "Compiler /d/a/cge-fpc/cge-fpc/fpcsrc/compiler/ppc1.exe not found"
-    # #
-    # # Workaround: Use our own pwd that calls original-pwd.exe
-    # # and processed output by cygpath --mixed.
-    # mv -f fpc-build-utils/pwd.exe fpc-build-utils/original-pwd.exe
-    # cp -f pwd-proxy fpc-build-utils/pwd
-
-  else
-    echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
   fi
 
-  PWD="`which pwd`"
-
-  echo 'Test pwd'
-  echo "pwd:" `pwd`
-  echo "PWD (no builtin):" `"${PWD}"`
-  echo "which pwd:" `which pwd`
-  cygpath --mixed `pwd`
-  cygpath --mixed `which pwd`
-
-  echo 'Testing Makefile.test'
-  make -f Makefile.test test
-
-  echo 'Building FPC'
   cd fpcsrc/
   make clean all install \
     INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" \
     FPC=${BOOTSTRAP_PPC_NAME} \
     OVERRIDEVERSIONCHECK=1 \
     OPT="${FPC_OPTS}"
+
+  if [ "${IS_WINDOWS}" = "true" ]; then
+    export PATH="$RESTORE_PATH"
+  fi
 
   # TODO: Enable cross-compiler to Win64 from other systems.
   # In the past this was making CGE pack_release job fail with "out of disk space"
@@ -359,11 +336,7 @@ do_fix_layout ()
   fi
 
   if [ "${IS_WINDOWS}" = "true" ]; then
-    # Note to line below:
-    # Do not put extra trailing slash at fpc/bin, as old `mv` from old MSys
-    # distributed with FPC on Windows cannot handle it correctly, fails with
-    # "when moving multiple files, last argument must be a directory".
-    mv -f fpc/bin/"${FPC_CPU}-${FPC_OS}"/* fpc/bin
+    mv -f fpc/bin/"${FPC_CPU}-${FPC_OS}"/* fpc/bin/
     # Remove empty unneeded dir
     rm -R fpc/bin/"${FPC_CPU}-${FPC_OS}"/
   fi
