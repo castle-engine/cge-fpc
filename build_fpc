@@ -63,8 +63,8 @@ set -euo pipefail
 # ---------------------------------------------------------------------
 
 # read params from command line
-FPC_OS=$1
-FPC_CPU=$2
+OS=$1
+CPU=$2
 shift 2
 
 # ---------------------------------------------------------------------
@@ -83,11 +83,11 @@ do_setup_environment ()
     WORKSPACE_ROOT="`cygpath --mixed \"${WORKSPACE_ROOT}\"`"
   fi
 
-  # calculate FPC_ZIP_NAME
-  FPC_ZIP_NAME="fpc-${FPC_OS}-${FPC_CPU}.zip"
+  # calculate ZIP_NAME
+  ZIP_NAME="fpc-${OS}-${CPU}.zip"
 
   # calculate IS_UNIX, IS_WINDOWS (happen to be negation of each other now)
-  if [ "${FPC_OS}" = "win64" -o "${FPC_OS}" = "win32" ]; then
+  if [ "${OS}" = "win64" -o "${OS}" = "win32" ]; then
     IS_UNIX=false
     IS_WINDOWS=true
   else
@@ -96,9 +96,9 @@ do_setup_environment ()
   fi
 
   # calculate NEEDS_FPC_FIXES_BRANCH
-  if [ "${FPC_OS}" = "darwin" -o \
-      '(' "${FPC_OS}" = "linux" -a "${FPC_CPU}" = "aarch64" ')' -o \
-      '(' "${FPC_OS}" = "linux" -a "${FPC_CPU}" = "arm" ')' \
+  if [ "${OS}" = "darwin" -o \
+      '(' "${OS}" = "linux" -a "${CPU}" = "aarch64" ')' -o \
+      '(' "${OS}" = "linux" -a "${CPU}" = "arm" ')' \
     ]; then
 
     # Build FPC 3.2.3 on macOS, to avoid failures like:
@@ -135,15 +135,15 @@ do_setup_environment ()
   fi
 
   echo "Variables calculated:"
-  echo "  FPC_ZIP_NAME (we will make this file): ${FPC_ZIP_NAME}"
+  echo "  ZIP_NAME (we will make this file): ${ZIP_NAME}"
   echo "  IS_UNIX: ${IS_UNIX}"
   echo "  IS_WINDOWS: ${IS_WINDOWS}"
   echo "  WORKSPACE_ROOT_UNIX: ${WORKSPACE_ROOT_UNIX}"
   echo "  WORKSPACE_ROOT: ${WORKSPACE_ROOT}"
   echo
   echo "  OS and CPU (source and target):"
-  echo "  FPC_OS: ${FPC_OS}"
-  echo "  FPC_CPU: ${FPC_CPU}"
+  echo "  OS: ${OS}"
+  echo "  CPU: ${CPU}"
   echo
   echo "  We will make such FPC:"
   echo "  NEEDS_FPC_FIXES_BRANCH: ${NEEDS_FPC_FIXES_BRANCH}"
@@ -180,14 +180,14 @@ do_calculate_bootstrap_ppc ()
 {
   # calculate BOOTSTRAP_PPC_SUFFIX
   local BOOTSTRAP_PPC_SUFFIX
-  case "${FPC_CPU}" in
+  case "${CPU}" in
     x86_64)  BOOTSTRAP_PPC_SUFFIX=ppcx64 ;;
     i386)    BOOTSTRAP_PPC_SUFFIX=ppc386 ;;
     aarch64) BOOTSTRAP_PPC_SUFFIX=ppca64 ;;
     arm)     BOOTSTRAP_PPC_SUFFIX=ppcarm ;;
     # More possible: ppc68k ppcppc ppcsparc ppcarmeb ppcppc64 ppcmips ppcmipsel ppcavr ppcjvm ppc8086 ppcsparc64
     *)
-      echo "Precompiled FPC for bootstrap cannot be determined, cannot determine BOOTSTRAP_PPC_SUFFIX for this CPU: ${FPC_CPU}"
+      echo "Precompiled FPC for bootstrap cannot be determined, cannot determine BOOTSTRAP_PPC_SUFFIX for this CPU: ${CPU}"
       exit 1
     ;;
   esac
@@ -200,7 +200,7 @@ do_calculate_bootstrap_ppc ()
   # Prepend to the binary name:
   # - source OS/CPU (from-....) since we must be able to execute it on this system
   # - required bootstrap version
-  BOOTSTRAP_PPC_NAME="${WORKSPACE_ROOT}/bootstrap-fpc/3.2.2/from-${FPC_CPU}-${FPC_OS}/${BOOTSTRAP_PPC_SUFFIX}"
+  BOOTSTRAP_PPC_NAME="${WORKSPACE_ROOT}/bootstrap-fpc/3.2.2/from-${CPU}-${OS}/${BOOTSTRAP_PPC_SUFFIX}"
   echo "Bootstrap PPC full filename: ${BOOTSTRAP_PPC_NAME}"
 
   # fallback to system-wide ppc* if not found
@@ -222,7 +222,8 @@ do_calculate_bootstrap_ppc ()
   fi
 
   # check BOOTSTRAP_PPC_NAME version
-  # (later "make ..." call will also check it unless we use OVERRIDEVERSIONCHECK=1)
+  # (later "make ..." call will also check it unless we use OVERRIDEVERSIONCHECK=1,
+  # but then we should not need OVERRIDEVERSIONCHECK=1, we use the right version)
   local VALID_BOOTSTRAP_PPC_VERSION='3.2.2'
   local CURRENT_BOOTSTRAP_PPC_VERSION=`${BOOTSTRAP_PPC_NAME} -iV`
   if [ "$IS_WINDOWS" = 'true' ]; then
@@ -240,7 +241,7 @@ do_calculate_bootstrap_ppc ()
 # test_program.lpr .
 do_calculate_fpc_opts ()
 {
-  if [ "${FPC_OS}" = "darwin" ]; then
+  if [ "${OS}" = "darwin" ]; then
     # Following FpcUpDeluxe:
     # MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard directory
     FPC_OPTS='-XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib -FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin'
@@ -255,11 +256,6 @@ do_fpc_build ()
   # it can mess parameters that start with / ,
   # see https://github.com/castle-engine/castle-engine/blob/6caed57cadcdd9ff383df8028e4bb274ca17732b/.github/workflows/test-and-pack-runner-native.yml#L129
   export MSYS2_ENV_CONV_EXCL='*'
-
-  # TODO: Adding OVERRIDEVERSIONCHECK=1 should not be needed.
-  # We use FPC 3.2.2 for bootstrap, which follows requirements for
-  # reliable bootstrapping, we even checked it above!
-  # So why does below fail without OVERRIDEVERSIONCHECK=1 ?
 
   # main building command
   local FPC_INSTALL_PREFIX="${WORKSPACE_ROOT}/fpc"
@@ -307,11 +303,11 @@ do_fpc_build ()
     # check the layout of fpc build repo on
     # https://gitlab.com/freepascal.org/fpc/build/-/tree/main/install?ref_type=heads
     local FPC_BUILD_OS_SUBDIR
-    case "${FPC_CPU}" in
+    case "${CPU}" in
       x86_64) FPC_BUILD_OS_SUBDIR=binw64 ;;
       i386)   FPC_BUILD_OS_SUBDIR=binw32 ;;
       *)
-        echo "Cannot find FPC_BUILD_OS_SUBDIR for this CPU: ${FPC_CPU}"
+        echo "Cannot find FPC_BUILD_OS_SUBDIR for this CPU: ${CPU}"
         exit 1
         ;;
     esac
@@ -343,12 +339,12 @@ do_fpc_build ()
   # but it should be fixed now. -- indeed FPC zips are larger.
   # TODO: Even better would be to have some way to auto-download FPC cross-compilers,
   # to not include them in the CGE release.
-  # if [ "${FPC_OS}" != "win64" -o "${FPC_CPU}" != "x86_64" ]; then
+  # if [ "${OS}" != "win64" -o "${CPU}" != "x86_64" ]; then
   #   make crossall crossinstall OS_TARGET=win64 CPU_TARGET=x86_64 INSTALL_PREFIX="{FPC_INSTALL_PREFIX}" OPT="${FPC_OPTS}"
   # fi
 
   # TODO: Enable cross-compiler to macOS/Aarch64 from macOS/Intel.
-  # if [ "${FPC_OS}" = "darwin" -a "${FPC_CPU}" = "x86_64" ]; then
+  # if [ "${OS}" = "darwin" -a "${CPU}" = "x86_64" ]; then
   #   make crossall crossinstall OS_TARGET=darwin CPU_TARGET=aarch64 INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" OPT="${FPC_OPTS}"
   # fi
 
@@ -368,9 +364,9 @@ do_fix_layout ()
   fi
 
   if [ "${IS_WINDOWS}" = "true" ]; then
-    mv -f fpc/bin/"${FPC_CPU}-${FPC_OS}"/* fpc/bin/
+    mv -f fpc/bin/"${CPU}-${OS}"/* fpc/bin/
     # Remove empty unneeded dir
-    rm -R fpc/bin/"${FPC_CPU}-${FPC_OS}"/
+    rm -R fpc/bin/"${CPU}-${OS}"/
   fi
 }
 
@@ -396,9 +392,9 @@ do_pack_zip ()
     # or use PowerShell
     # "run: Compress-Archive -Path folder/ -Destination new.zip"
     # see https://stackoverflow.com/questions/74939762/create-zip-file-of-github-reporitory-using-a-workflow-which-runs-on-windows-lat )
-    7z a ${FPC_ZIP_NAME} fpc/
+    7z a ${ZIP_NAME} fpc/
   else
-    zip -r ${FPC_ZIP_NAME} fpc/
+    zip -r ${ZIP_NAME} fpc/
   fi
 }
 
@@ -416,23 +412,23 @@ do_test_version_os_cpu ()
     exit 1
   fi
 
-  local ACTUAL_FPC_OS="`fpc/bin/fpc -iTO`"
+  local ACTUAL_OS="`fpc/bin/fpc -iTO`"
   if [ "$IS_WINDOWS" = 'true' ]; then
     # remove \r at the end, following https://superuser.com/questions/489180/remove-r-from-echoing-out-in-bash-script
-    ACTUAL_FPC_OS="${ACTUAL_FPC_OS%%[[:cntrl:]]}"
+    ACTUAL_OS="${ACTUAL_OS%%[[:cntrl:]]}"
   fi
-  if [ "$ACTUAL_FPC_OS" != "$FPC_OS" ]; then
-    echo "FPC OS is $ACTUAL_FPC_OS, expected $FPC_OS"
+  if [ "$ACTUAL_OS" != "$OS" ]; then
+    echo "FPC OS is $ACTUAL_OS, expected $OS"
     exit 1
   fi
 
-  local ACTUAL_FPC_CPU="`fpc/bin/fpc -iTP`"
+  local ACTUAL_CPU="`fpc/bin/fpc -iTP`"
   if [ "$IS_WINDOWS" = 'true' ]; then
     # remove \r at the end, following https://superuser.com/questions/489180/remove-r-from-echoing-out-in-bash-script
-    ACTUAL_FPC_CPU="${ACTUAL_FPC_CPU%%[[:cntrl:]]}"
+    ACTUAL_CPU="${ACTUAL_CPU%%[[:cntrl:]]}"
   fi
-  if [ "$ACTUAL_FPC_CPU" != "$FPC_CPU" ]; then
-    echo "FPC CPU is $ACTUAL_FPC_CPU, expected $FPC_CPU"
+  if [ "$ACTUAL_CPU" != "$CPU" ]; then
+    echo "FPC CPU is $ACTUAL_CPU, expected $CPU"
     exit 1
   fi
 }
@@ -442,7 +438,7 @@ do_test_version_os_cpu ()
 do_test_program ()
 {
   fpc/bin/fpc \
-    "-Fufpc/units/${FPC_CPU}-${FPC_OS}/*" \
+    "-Fufpc/units/${CPU}-${OS}/*" \
     ${FPC_OPTS} \
     test_program.lpr
 

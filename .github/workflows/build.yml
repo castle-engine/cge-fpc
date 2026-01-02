@@ -28,23 +28,23 @@ jobs:
           macos-latest
         ]
         include:
-          # Set matrix.fpc_os, matrix.fpc_cpu .
+          # Set matrix.build_os, matrix.build_cpu .
           # These are OS and CPU names following FPC naming convention,
           # exactly as if from
           # - fpc -iTO / -iSO (target/source OS)
           # - fpc -iTP / -iSP (target/source CPU)
           # They describe both source and target OS/CPU in our scenario.
-          - fpc_os: linux
-            fpc_cpu: x86_64
+          - build_os: linux
+            build_cpu: x86_64
           - runner: windows-latest
-            fpc_os: win64
-            fpc_cpu: x86_64
+            build_os: win64
+            build_cpu: x86_64
           - runner: macos-latest
-            fpc_os: darwin
-            fpc_cpu: aarch64
+            build_os: darwin
+            build_cpu: aarch64
           - runner: macos-15-intel
-            fpc_os: darwin
-            fpc_cpu: x86_64
+            build_os: darwin
+            build_cpu: x86_64
 
     runs-on: ${{ matrix.runner }}
     steps:
@@ -65,7 +65,7 @@ jobs:
       #   run: brew install fpc
 
       - name: Build FPC
-        run: ./build_fpc ${{ matrix.fpc_os }} ${{ matrix.fpc_cpu }}
+        run: ./build_fpc ${{ matrix.build_os }} ${{ matrix.build_cpu }}
 
       # Old approach:
       # Get artifacts.
@@ -74,7 +74,7 @@ jobs:
       # - name: Archive Artifacts
       #   uses: actions/upload-artifact@v4
       #   with:
-      #     name: fpc-${{ matrix.fpc_os }}-${{ matrix.fpc_cpu }}-release
+      #     name: fpc-${{ matrix.build_os }}-${{ matrix.build_cpu }}-release
       #     path: "fpc-*.zip"
       #     if-no-files-found: error
 
@@ -86,10 +86,10 @@ jobs:
 
       # Additionally, when on Win64, build and release also Win32 FPC.
       - name: Build FPC (for Win32)
-        if: ${{ matrix.fpc_os == 'win64' && matrix.fpc_cpu == 'x86_64' }}
+        if: ${{ matrix.build_os == 'win64' && matrix.build_cpu == 'x86_64' }}
         run: ./build_fpc win32 i386
       - name: Release Artifacts (for Win32)
-        if: ${{ matrix.fpc_os == 'win64' && matrix.fpc_cpu == 'x86_64' && github.ref == 'refs/heads/master' }}
+        if: ${{ matrix.build_os == 'win64' && matrix.build_cpu == 'x86_64' && github.ref == 'refs/heads/master' }}
         run: gh release --repo castle-engine/cge-fpc upload snapshot --clobber fpc-*.zip
         env:
           GH_TOKEN: ${{ github.token }}
@@ -108,8 +108,8 @@ jobs:
           cpu: cortex-a7
           base_image: raspios_lite:latest
           # Arguments for build_fpc script.
-          fpc_os: linux
-          fpc_cpu: arm
+          build_os: linux
+          build_cpu: arm
 
         # additional defines for Raspberry Pi 64-bit (Aarch64)
         - arch: raspberry-pi-64
@@ -117,8 +117,8 @@ jobs:
           cpu: cortex-a53
           base_image: raspios_lite_arm64:latest
           # Arguments for build_fpc script.
-          fpc_os: linux
-          fpc_cpu: aarch64
+          build_os: linux
+          build_cpu: aarch64
 
     steps:
       - uses: actions/checkout@v6
@@ -142,7 +142,7 @@ jobs:
             fi
 
             # run build_fpc
-            ./build_fpc ${{ matrix.fpc_os }} ${{ matrix.fpc_cpu }}
+            ./build_fpc ${{ matrix.build_os }} ${{ matrix.build_cpu }}
 
       - name: Release Artifacts
         if: ${{ github.ref == 'refs/heads/master' }}
