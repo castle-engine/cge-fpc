@@ -293,7 +293,23 @@ do_fpc_build ()
     #
     #    Symptom: "make ..." fails with "You need the GNU utils package to use this Makefile".
     #
-    #    Solution is to use our ${WORKSPACE_ROOT_UNIX}/fpc-windows-utilities/ .
+    #    Solution is to use our ${WORKSPACE_ROOT_UNIX}/fpc-build/install/binwXX .
+
+    git clone https://gitlab.com/freepascal.org/fpc/build.git \
+      -c advice.detachedHead=false \
+      --depth 1 --single-branch --branch main fpc-build
+
+    # check the layout of fpc build repo on
+    # https://gitlab.com/freepascal.org/fpc/build/-/tree/main/install?ref_type=heads
+    local FPC_BUILD_OS_SUBDIR
+    case "${FPC_CPU}" in
+      x86_64) FPC_BUILD_OS_SUBDIR=binw64 ;;
+      i386)   FPC_BUILD_OS_SUBDIR=binw32 ;;
+      *)
+        echo "Cannot find FPC_BUILD_OS_SUBDIR for this CPU: ${FPC_CPU}"
+        exit 1
+        ;;
+    esac
 
     # Restore $PATH later, as the FPC utilities are weirdly old.
     # E.g. `mv.exe` is some archaic version that doesn't tolerate last
@@ -304,7 +320,7 @@ do_fpc_build ()
     # Note that we need to append here to PATH using WORKSPACE_ROOT_UNIX,
     # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
     # (not drive letter separator).
-    export PATH="${WORKSPACE_ROOT_UNIX}/fpc-windows-utilities/:$PATH"
+    export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build/install/${FPC_BUILD_OS_SUBDIR}/:$PATH"
   fi
 
   cd fpcsrc/
