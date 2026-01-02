@@ -21,11 +21,11 @@ jobs:
     strategy:
       matrix:
         runner: [
-          ubuntu-latest,
-          windows-latest,
+          #ubuntu-latest,
+          windows-latest
           # last macOS using Intel
-          macos-15-intel,
-          macos-latest
+          #macos-15-intel,
+          #macos-latest
         ]
         include:
           # Set matrix.fpc_os, matrix.fpc_cpu .
@@ -34,17 +34,16 @@ jobs:
           # - fpc -iTO / -iSO (target/source OS)
           # - fpc -iTP / -iSP (target/source CPU)
           # They describe both source and target OS/CPU in our scenario.
-          - fpc_os: linux
+          # - fpc_os: linux
+          #   fpc_cpu: x86_64
+          - fpc_os: win64
             fpc_cpu: x86_64
-          - runner: windows-latest
-            fpc_os: win64
-            fpc_cpu: x86_64
-          - runner: macos-latest
-            fpc_os: darwin
-            fpc_cpu: aarch64
-          - runner: macos-15-intel
-            fpc_os: darwin
-            fpc_cpu: x86_64
+          # - runner: macos-latest
+          #   fpc_os: darwin
+          #   fpc_cpu: aarch64
+          # - runner: macos-15-intel
+          #   fpc_os: darwin
+          #   fpc_cpu: x86_64
 
     runs-on: ${{ matrix.runner }}
     steps:

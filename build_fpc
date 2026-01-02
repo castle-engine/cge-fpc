@@ -255,6 +255,9 @@ do_fpc_build ()
   if which cygpath > /dev/null; then
     FPC_INSTALL_PREFIX="`cygpath --mixed \"${FPC_INSTALL_PREFIX}\"`"
   fi
+
+  make -f Makefile.test test
+
   cd fpcsrc/
   make clean all install \
     INSTALL_PREFIX="${FPC_INSTALL_PREFIX}" \
