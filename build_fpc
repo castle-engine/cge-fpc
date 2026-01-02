@@ -76,6 +76,12 @@ shift 2
 # Determine variables used through the rest of the script.
 do_setup_environment ()
 {
+  # calculate WORKSPACE_ROOT, in native (on Windows) path format
+  WORKSPACE_ROOT=`pwd`
+  if which cygpath > /dev/null; then
+    WORKSPACE_ROOT="`cygpath --mixed \"${WORKSPACE_ROOT}\"`"
+  fi
+
   # calculate FPC_ZIP_NAME
   FPC_ZIP_NAME="fpc-${FPC_OS}-${FPC_CPU}.zip"
 
@@ -131,6 +137,7 @@ do_setup_environment ()
   echo "  FPC_ZIP_NAME (we will make this file): ${FPC_ZIP_NAME}"
   echo "  IS_UNIX: ${IS_UNIX}"
   echo "  IS_WINDOWS: ${IS_WINDOWS}"
+  echo "  WORKSPACE_ROOT: ${WORKSPACE_ROOT}"
   echo
   echo "  OS and CPU (source and target):"
   echo "  FPC_OS: ${FPC_OS}"
@@ -190,10 +197,7 @@ do_calculate_bootstrap_ppc ()
   # Prepend to the binary name:
   # - source OS/CPU (from-....) since we must be able to execute it on this system
   # - required bootstrap version
-  BOOTSTRAP_PPC_NAME=`pwd`"/bootstrap-fpc/3.2.2/from-${FPC_CPU}-${FPC_OS}/${BOOTSTRAP_PPC_SUFFIX}"
-  if which cygpath > /dev/null; then
-    BOOTSTRAP_PPC_NAME="`cygpath --mixed \"${BOOTSTRAP_PPC_NAME}\"`"
-  fi
+  BOOTSTRAP_PPC_NAME="${WORKSPACE_ROOT}/bootstrap-fpc/3.2.2/from-${FPC_CPU}-${FPC_OS}/${BOOTSTRAP_PPC_SUFFIX}"
   echo "Bootstrap PPC full filename: ${BOOTSTRAP_PPC_NAME}"
 
   # fallback to system-wide ppc* if not found
@@ -251,9 +255,12 @@ do_fpc_build ()
   # So why does below fail without OVERRIDEVERSIONCHECK=1 ?
 
   # main building command
-  local FPC_INSTALL_PREFIX=`pwd`/fpc
-  if which cygpath > /dev/null; then
-    FPC_INSTALL_PREFIX="`cygpath --mixed \"${FPC_INSTALL_PREFIX}\"`"
+  local FPC_INSTALL_PREFIX="${WORKSPACE_ROOT}/fpc"
+
+  if [ "${IS_WINDOWS}" = "true" -a -f 'C:/Program Files/Git/usr/bin/pwd.exe' ]; then
+    mkdir -p fpc-build-utils/
+    cp -f 'C:/Program Files/Git/usr/bin/*.exe' fpc-build-utils/
+    export PATH="${WORKSPACE_ROOT}/fpc-build-utils/:$PATH"
   fi
 
   echo '1111'
