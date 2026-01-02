@@ -165,6 +165,10 @@ fi
 # (later "make ..." call will also check it unless we use OVERRIDEVERSIONCHECK=1)
 VALID_BOOTSTRAP_PPC_VERSION='3.2.2'
 CURRENT_BOOTSTRAP_PPC_VERSION=`${BOOTSTRAP_PPC_NAME} -iV`
+if [ "$IS_WINDOWS" = 'true' ]; then
+  # remove \r at the end, following https://superuser.com/questions/489180/remove-r-from-echoing-out-in-bash-script
+  CURRENT_BOOTSTRAP_PPC_VERSION="${CURRENT_BOOTSTRAP_PPC_VERSION%%[[:cntrl:]]}"
+fi
 echo "Bootstrap PPC version is ${CURRENT_BOOTSTRAP_PPC_VERSION}."
 if [ "${CURRENT_BOOTSTRAP_PPC_VERSION}" != "${VALID_BOOTSTRAP_PPC_VERSION}" ]; then
   echo "Precompiled FPC for bootstrap has wrong version. Expected ${VALID_BOOTSTRAP_PPC_VERSION}, found ${CURRENT_BOOTSTRAP_PPC_VERSION}."
