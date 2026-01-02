@@ -263,6 +263,19 @@ do_fpc_build ()
   local FPC_INSTALL_PREFIX="${WORKSPACE_ROOT}/fpc"
 
   if [ "${IS_WINDOWS}" = "true" -a -f 'C:/Program Files/Git/usr/bin/pwd.exe' ]; then
+
+    # Makefile inside FPC has problems when `pwd.exe` is present in a directory
+    # with space in path.
+    # The Makefile does PWD:=$(strip $(wildcard $(addsuffix /pwd,$(SEARCHPATH))))
+    # and will fail to find PWD when there is space in path.
+    # And this is the case on GH-hosted Windows runner, where pwd.exe
+    # is inside "C:/Program Files/Git/usr/bin/".
+    # They could have used "which pwd", which would be more reliable, but didn't...
+    #
+    # Symptom: "make ..." fails with "You need the GNU utils package to use this Makefile".
+    #
+    # Workaround: Copy to fpc-build-utils/ (no space in path).
+
     echo 'Workaround for GH-hosted Windows machine with space in path to pwd.exe'
     mkdir -p fpc-build-utils/
     cp -f 'C:/Program Files/Git/usr/bin/'*.exe fpc-build-utils/
@@ -271,6 +284,30 @@ do_fpc_build ()
     # not WORKSPACE_ROOT, as in MSys/Cygwin, : is path separator
     # (not drive letter separator).
     export PATH="${WORKSPACE_ROOT_UNIX}/fpc-build-utils/:$PATH"
+
+    # Makefile inside FPC has problems if `pwd` answers with MSys path (with /),
+    # like /c/... .
+    # It needs to convert it to native path (understood by non-Msys2/Cygwin tools),
+    # but it has only a weird hardcoded logic for "/cygdrive..." prefix,
+    # which works on Cygwin but not MSys2.
+    # They could have used "cygpath --mixed ..." which would be equally reliable
+    # on Cygwin and MSys2, but didn't...
+    #
+    # Symptom: "make ..." fails with error where it's evident that
+    # non-MSys2/Cygwin tools got a MSys2/Cygwin path, like
+    # "Compiler /d/a/cge-fpc/cge-fpc/fpcsrc/compiler/ppc1.exe not found"
+    #
+    # Workaround: Use our own pwd.
+    mv -f fpc-build-utils/pwd.exe fpc-build-utils/original-pwd.exe
+    cat <<EOF > fpc-build-utils/pwd
+#!/bin/bash
+set -eu
+RESULT="`original-pwd`"
+RESULT="`cygpath --mixed \"${RESULT}\"`"
+echo "${RESULT}"
+EOF
+    chmod +x fpc-build-utils/pwd
+
   else
     echo 'NO: Workaround for GH-hosted Windows machine with space in path to pwd.exe'
   fi
