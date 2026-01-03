@@ -152,7 +152,7 @@ jobs:
 
   # once everything is successfull, move forward the "snapshot" tag.
   # This makes the "XXX commits to master since this release"
-  # on https://github.com/castle-engine/cge-fpc/releases/tag/snapshot right.
+  # on https://github.com/castle-engine/castle-fpc/releases/tag/snapshot right.
   update_release_tag:
     name: Update Release Tag
     runs-on: ubuntu-latest

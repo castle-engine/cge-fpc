@@ -18,19 +18,19 @@ Features:
 
 - The resulting FPC is a trivial ZIP, for all platforms, easy to unpack and repack into a larger installer.
 
-- The resulting FPC build is released as [snapshot](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) release. Scripts (from other CI/CD workflows) can download this FPC trivially too, just
+- The resulting FPC build is released as [snapshot](https://github.com/castle-engine/castle-fpc/releases/tag/snapshot) release. Scripts (from other CI/CD workflows) can download this FPC trivially too, just
 
     ```
-    wget https://github.com/castle-engine/cge-fpc/releases/download/snapshot/fpc-"${OS}"-"${CPU}".zip
+    wget https://github.com/castle-engine/castle-fpc/releases/download/snapshot/fpc-"${OS}"-"${CPU}".zip
     ```
 
-- When using this FPC, be sure to specify proper options. See section _"You also need fpc.cfg or otherwise pass some command-line options to FPC"_ below and see repo [cge-lazarus](https://github.com/castle-engine/cge-lazarus) for example usage.
+- When using this FPC, be sure to specify proper options. See section _"You also need fpc.cfg or otherwise pass some command-line options to FPC"_ below and see repo [castle-lazarus](https://github.com/castle-engine/castle-lazarus) for example usage.
 
 - Auto-tested. We actually execute the build compiler on [test_program.lpr](test_program.lpr) to make sure it works.
 
 While the primary use-case is that people download [Castle Game Engine bundled with FPC](https://castle-engine.io/download) and use it, you can also
 
-- directly download the FPC build from [snapshot release](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) and use it.
+- directly download the FPC build from [snapshot release](https://github.com/castle-engine/castle-fpc/releases/tag/snapshot) and use it.
 
 - You can also just run `build_fpc` script yourself, to build FPC for your platform. It's a regular bash script and we put effort that it "just works" on all platforms. All you need is a basic set of Unix tools (on Windows, make sure you have MSys2/Cygwin installed).
 
@@ -86,7 +86,7 @@ Note that we don't fork FPC here.
 
 - This repository contains [GitHub Actions](https://castle-engine.io/github_actions) workflows (see inside `.github` subdirectory) to build FPC for major CGE supported platforms.
 
-    See the [snapshot release assets](https://github.com/castle-engine/cge-fpc/releases/tag/snapshot) for a list of available OS/CPU combinations.
+    See the [snapshot release assets](https://github.com/castle-engine/castle-fpc/releases/tag/snapshot) for a list of available OS/CPU combinations.
 
 - FPC is build, installed and packaged to a simple zip. Later, this zip is included in CGE binary download (this is handled during CGE build).
 
@@ -100,7 +100,7 @@ Note that we don't fork FPC here.
 
     Building FPC ourselves, as a simple zip for all platforms we need, is simplest.
 
-Note: We have also repo where we build Lazarus, https://github.com/castle-engine/cge-lazarus . But it has more limited use-case now (as we don't bundle Lazarus with CGE).
+Note: We have also repo where we build Lazarus, https://github.com/castle-engine/castle-lazarus . But it has more limited use-case now (as we don't bundle Lazarus with CGE).
 
 ## Future
 

@@ -109,7 +109,7 @@ utils_download_and_setup_fpc_build_resources ()
 
 # Calculate $FPC_OPTS, white-space-separated FPC options,
 # to use for FPC building, and later to build applications
-# (test_program.lpr in cge-fpc, or Lazarus later in cge-lazarus).
+# (test_program.lpr in castle-fpc, or Lazarus later in castle-lazarus).
 utils_calculate_fpc_opts ()
 {
   FPC_OPTS=''

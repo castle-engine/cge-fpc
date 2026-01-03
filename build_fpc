@@ -34,7 +34,7 @@ set -euo pipefail
 #   "win32 i386" since it can execute (and build) FPC for either win32 or win64.
 #
 # Assumes:
-# - We are in cge-fpc repository with bootstrap-fpc/ subdirectory available.
+# - We are in castle-fpc repository with bootstrap-fpc/ subdirectory available.
 # - We have tools available, like standard Unix tools and git.
 #   On Windows, be sure to have MSys2 (already OK on GH-hosted runners) or Cygwin.
 # - We either have the bootstrap FPC binary in bootstrap-fpc/,
