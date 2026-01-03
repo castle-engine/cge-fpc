@@ -49,7 +49,8 @@ A minimal FPC configuration file (you would place this in file like `fpc.cfg` al
 
 #ifdef DARWIN
 # Add macOS specific flags, otherwise linking on newer macOS versions fails.
-# See build_fpc script for full detection and reason behind these flags.
+# See "utils_calculate_fpc_opts" function in "build_utilities" script
+# for full detection and reason behind these flags.
 -XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 -Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
 -FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
@@ -57,8 +58,7 @@ A minimal FPC configuration file (you would place this in file like `fpc.cfg` al
 #endif
 ```
 
-Our `build_fpc` script really auto-tests that these options are enough to build programs, so we are sure of them.
-
+Our `build_fpc` script auto-tests that these options allow to build programs, so we are sure these options are good.
 
 ## Why
 
