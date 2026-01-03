@@ -221,12 +221,32 @@ do_calculate_bootstrap_ppc ()
 # test_program.lpr .
 do_calculate_fpc_opts ()
 {
+  FPC_OPTS=''
+
+  # Add macOS specific flags, otherwise linking on newer macOS versions fails.
   if [ "${OS}" = "darwin" ]; then
-    # Following FpcUpDeluxe:
+
+    # This is following FpcUpDeluxe:
     # MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard directory
-    FPC_OPTS='-XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib -FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin'
-  else
-    FPC_OPTS=''
+    MAC_SDK="`xcrun --show-sdk-path`"
+    MAC_XCODE="`xcode-select --print-path`"
+    FPC_OPTS="${FPC_OPTS} -XR${MAC_SDK} -Fl${MAC_SDK}/usr/lib -FD${MAC_XCODE}/Toolchains/XcodeDefault.xctoolchain/usr/bin"
+
+    # Linking GUI applications on newer macOS, with Aarch64,
+    # requires -WMxxx (it is also OK on x86_64).
+    #
+    # While some non-GUI applications (like fpc or CGE build tool) don't need it,
+    # but then we have a flood of linking warnings about FPC and CGE units:
+    # "ld: warning: object file (.....o) was built for newer 'macOS' version (11.0) than being linked (10.15)"
+    # So it's better to use -WMxxx below always.
+    #
+    # See also fpcupdeluxe logic:
+    # https://github.com/LongDirtyAnimAlf/fpcupdeluxe/blob/63228f718e24e0a5e77c8f5b70e269ba92393b9d/sources/crossinstallers/m_darwin_to_apple_base.pas#L232
+    # Some discussion in:
+    # https://gitlab.com/freepascal.org/lazarus/lazarus/-/issues/41570
+    MAC_SDK_VERSION="`xcrun --show-sdk-version`"
+    echo "macOS SDK version is ${MAC_SDK_VERSION}, assuming it is >= 11.0."
+    FPC_OPTS="${FPC_OPTS} -WM10.15"
   fi
 }
 

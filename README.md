@@ -48,12 +48,12 @@ A minimal FPC configuration file (you would place this in file like `fpc.cfg` al
 -Fu<directory-where-you-extracted-FPC-ZIP>/fpc/units/$FPCTARGET/*
 
 #ifdef DARWIN
-# MacOS 10.14 Mojave and newer have libs and tools in new, yet non-standard for FPC, directory
-# Note that it requires having Xcode command-line tools installed,
-# you can check the base path with `xcode-select--print-path`.
+# Add macOS specific flags, otherwise linking on newer macOS versions fails.
+# See build_fpc script for full detection and reason behind these flags.
 -XR/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 -Fl/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib
 -FD/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
+-WM10.15
 #endif
 ```
 
