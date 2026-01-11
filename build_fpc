@@ -2,13 +2,12 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------
-# Build "best stable" FPC version from sources.
-# The "best stable" means now:
-# - 3.2.2
-# - or 3.2.3 for some platforms (determined inside this script)
+# Build FPC version from sources.
 #
 # Arguments:
-# $1 is OS, $2 is CPU.
+#
+# $1 is OS,
+# $2 is CPU.
 #
 #   Must follow exactly FPC's naming convention for
 #   - fpc -iTO / -iSO (target/source OS)
@@ -32,6 +31,19 @@ set -euo pipefail
 #   if platform can execute binaries with various architectures, you have
 #   a choice. E.g. on Windows, you can pass either "win64 x86_64" or
 #   "win32 i386" since it can execute (and build) FPC for either win32 or win64.
+#
+# $3 is FPC version (called FPC_VERSION_LABEL in this script implementation),
+# one of
+#
+# - stable: means to build the "best stable" FPC for Castle Game Engine,
+#   which now means:
+#   - 3.2.2 for most platforms
+#   - 3.2.3 (latest state of fixes_3_2 branch) for some exceptional platforms:
+#     macOS/anything, Linux/Arm, Linux/Aarch64.
+#
+# - "unstable": means to build FPC 3.3.1 from from "main" branch
+#   of FPC repo https://gitlab.com/freepascal.org/fpc/source/ .
+#   We use a commit hash FPC_UNSTABLE_COMMIT hardcoded in this script.
 #
 # Assumes:
 # - We are in castle-fpc repository with bootstrap-fpc/ subdirectory available.
@@ -65,7 +77,8 @@ set -euo pipefail
 # read params from command line
 OS=$1
 CPU=$2
-shift 2
+FPC_VERSION_LABEL=$3
+shift 3
 
 source build_utilities
 
@@ -75,10 +88,25 @@ source build_utilities
 # Determine variables used through the rest of the script.
 do_setup_environment ()
 {
-  # calculate ZIP_NAME
-  ZIP_NAME="fpc-${OS}-${CPU}.zip"
+  # latest from https://gitlab.com/freepascal.org/fpc/source/ on 2026-01-11
+  FPC_UNSTABLE_COMMIT='bdb427b08454cff85dca2fbaccf7249716962845'
 
-  # calculate NEEDS_FPC_FIXES_BRANCH
+  # calculate ZIP_NAME
+  case "${FPC_VERSION_LABEL}" in
+    stable)
+      local FPC_VERSION_TO_ZIP=''
+      ;;
+    unstable)
+      local FPC_VERSION_TO_ZIP='unstable-'
+      ;;
+    *)
+      echo "Unknown FPC version: ${FPC_VERSION_LABEL}"
+      exit 1
+    ;;
+  esac
+  ZIP_NAME="fpc-${FPC_VERSION_TO_ZIP}${OS}-${CPU}.zip"
+
+  # calculate NEEDS_FPC_FIXES_BRANCH (only relevant when FPC_VERSION_LABEL = stable)
   if [ "${OS}" = "darwin" -o \
       '(' "${OS}" = "linux" -a "${CPU}" = "aarch64" ')' -o \
       '(' "${OS}" = "linux" -a "${CPU}" = "arm" ')' \
@@ -109,12 +137,18 @@ do_setup_environment ()
     local NEEDS_FPC_FIXES_BRANCH=false
   fi
 
-  if [ "${NEEDS_FPC_FIXES_BRANCH}" = "true" ]; then
+  if [ "${FPC_VERSION_LABEL}" = "unstable" ]; then
+    FPC_BRANCHTAG="main"
+    FPC_VERSION="3.3.1"
+    FPC_COMMIT="${FPC_UNSTABLE_COMMIT}"
+  elif [ "${NEEDS_FPC_FIXES_BRANCH}" = "true" ]; then
     FPC_BRANCHTAG="fixes_3_2"
     FPC_VERSION="3.2.3"
+    FPC_COMMIT=""
   else
     FPC_BRANCHTAG="release_3_2_2"
     FPC_VERSION="3.2.2"
+    FPC_COMMIT=""
   fi
 
   echo "Variables calculated:"
@@ -125,9 +159,11 @@ do_setup_environment ()
   echo "  CPU: ${CPU}"
   echo
   echo "  We will make such FPC:"
-  echo "  NEEDS_FPC_FIXES_BRANCH: ${NEEDS_FPC_FIXES_BRANCH}"
+  echo "  FPC_VERSION_LABEL: ${FPC_VERSION_LABEL}"
+  echo "  NEEDS_FPC_FIXES_BRANCH (ignored for FPC_VERSION <> stable): ${NEEDS_FPC_FIXES_BRANCH}"
   echo "  FPC_BRANCHTAG: ${FPC_BRANCHTAG}"
   echo "  FPC_VERSION: ${FPC_VERSION}"
+  echo "  FPC_COMMIT (empty to take latest from FPC_BRANCHTAG): ${FPC_COMMIT}"
   echo
 }
 
@@ -150,9 +186,21 @@ do_fpc_sources_get ()
   # avoid useless warning (in this case, when we know what we do) about being
   # in "detached HEAD" state.
 
+  # We can specify --depth 1 only when we don't need to checkout another commit.
+  if [ -z "${FPC_COMMIT}" ]; then
+    DEPTH='--depth 1'
+  else
+    DEPTH=''
+  fi
+
   git clone https://gitlab.com/freepascal.org/fpc/source.git \
     -c advice.detachedHead=false \
-    --depth 1 --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc
+    ${DEPTH} --single-branch --branch "${FPC_BRANCHTAG}" fpcsrc
+  if [ -n "${FPC_COMMIT}" ]; then
+    pushd fpcsrc/
+    git checkout "${FPC_COMMIT}"
+    popd
+  fi
 }
 
 # Calculate $BOOTSTRAP_PPC_NAME , absolute filename of starting FPC binary.
@@ -243,7 +291,7 @@ do_fpc_build ()
 
   # TODO: Enable cross-compiler to Win64 from other systems.
   # In the past this was making CGE pack_release job fail with "out of disk space"
-  # but it should be fixed now. -- indeed FPC zips are larger.
+  # but it should be fixed now.
   # TODO: Even better would be to have some way to auto-download FPC cross-compilers,
   # to not include them in the CGE release.
   # if [ "${OS}" != "win64" -o "${CPU}" != "x86_64" ]; then
@@ -282,8 +330,8 @@ do_copy_sources ()
 {
   # Copy sources to fpc/src
   # See https://stackoverflow.com/questions/160608/do-a-git-export-like-svn-export
-  # This way we only copy to fpc/src files from repo (not any compiled stuff,
-  # and "make clean" doesn't really clean everything; and not .git subdir).
+  # This way we only copy to fpc/src files from repo (not any compiled stuff or .git;
+  # "make clean" would not be a solution, as it doesn't really clean everything).
   cd fpcsrc/
   mkdir ../fpc/src
   git archive HEAD | tar -x -C ../fpc/src
@@ -294,11 +342,17 @@ do_copy_sources ()
 do_pack_zip ()
 {
   if which 7z > /dev/null; then
-    # Use 7z on Windows to make zip, as it's preinstalled on GH hosted Windows.
-    # ( We could alternatively install zip, e.g. using Chocolatey,
+    # Use 7z when available.
+    #
+    # This is in particular useful on GH hosted Windows,
+    # where "zip" is not available out-of-box but "7z" is.
+    # ( Though we could alternatively install zip using Chocolatey,
     # or use PowerShell
     # "run: Compress-Archive -Path folder/ -Destination new.zip"
     # see https://stackoverflow.com/questions/74939762/create-zip-file-of-github-reporitory-using-a-workflow-which-runs-on-windows-lat )
+    #
+    # But 7z also seems more actively maintained, so let's use it on all
+    # platforms if we can.
     7z a ${ZIP_NAME} fpc/
   else
     zip -r ${ZIP_NAME} fpc/

@@ -14,7 +14,10 @@ Features:
 
 - As much as possible is within the bash script logic and you can just run `build_fpc` on your machine to test it works. So it's not only for CI/CD.
 
-- The resulting FPC is of "best stable" version (3.2.2 or 3.2.3 now, depending on the platform).
+- The resulting FPC version can be:
+    - "best stable" version (3.2.2 or 3.2.3 now, depending on the platform).
+    - "last tested unstable" version (3.3.1 from a commit hash
+      `FPC_UNSTABLE_COMMIT` in script).
 
 - The resulting FPC is a trivial ZIP, for all platforms, easy to unpack and repack into a larger installer.
 
@@ -97,6 +100,8 @@ Note that we don't fork FPC here.
     We also don't use binary downloads from https://sourceforge.net/projects/freepascal/ .They don't provide Win64 compiler (only Win32, unexpected by most users).
 
     We also need to use FPC 3.2.3 (fixed branch) on some platforms. We can decide about it here, and later CGE build process can just take the version from this repo as "best stable version".
+
+    We also want to test FPC 3.3.1 from a commit hash we define here.
 
     Building FPC ourselves, as a simple zip for all platforms we need, is simplest.
 
